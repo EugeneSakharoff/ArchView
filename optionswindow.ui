@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>OptionsWindow</class>
+ <widget class="QDialog" name="OptionsWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>483</width>
+    <height>365</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Настройки</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="tabWidgetMain">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tabDB">
+      <attribute name="title">
+       <string>Настройки БД</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QTabWidget" name="tabWidgetDB">
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <widget class="QWidget" name="tabGeneral">
+          <attribute name="title">
+           <string>Общие</string>
+          </attribute>
+          <layout class="QFormLayout" name="formLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelName">
+             <property name="text">
+              <string>Имя БД по умолчанию:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="editName"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labelUser">
+             <property name="text">
+              <string>Пользователь по умолчанию:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="editUser"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelPassword">
+             <property name="text">
+              <string>Пароль по умолчанию:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="editPassword"/>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="labelPort">
+             <property name="text">
+              <string>Порт по умолчанию:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="labelServiceName">
+             <property name="text">
+              <string>Имя сервисной БД:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="labelServiceUser">
+             <property name="text">
+              <string>Пользователь сервисной БД:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="labelServicePassword">
+             <property name="text">
+              <string>Пароль сервисной БД:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="editPort"/>
+           </item>
+           <item row="4" column="1">
+            <widget class="QLineEdit" name="editServiceName"/>
+           </item>
+           <item row="5" column="1">
+            <widget class="QLineEdit" name="editServiceUser"/>
+           </item>
+           <item row="6" column="1">
+            <widget class="QLineEdit" name="editServicePassword"/>
+           </item>
+           <item row="7" column="1">
+            <widget class="QCheckBox" name="checkBoxConnectOnStart">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0">
+            <widget class="QLabel" name="labelConnectOnStart">
+             <property name="text">
+              <string>Подключаться при запуске:</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tabDescriptions">
+          <attribute name="title">
+           <string>Таблица описаний</string>
+          </attribute>
+         </widget>
+         <widget class="QWidget" name="tabValues">
+          <attribute name="title">
+           <string>Таблица значений</string>
+          </attribute>
+         </widget>
+         <widget class="QWidget" name="tabMessages">
+          <attribute name="title">
+           <string>Таблица сообщений</string>
+          </attribute>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabInterface">
+      <attribute name="title">
+       <string>Интерфейс</string>
+      </attribute>
+     </widget>
+     <widget class="QWidget" name="tab_3">
+      <attribute name="title">
+       <string>Общие</string>
+      </attribute>
+     </widget>
+     <widget class="QWidget" name="tab_4">
+      <attribute name="title">
+       <string>Тестовая БД</string>
+      </attribute>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>OptionsWindow</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>OptionsWindow</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
