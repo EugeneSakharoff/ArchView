@@ -22,7 +22,6 @@ connect(intervalSelector,&IntervalSelector::changed,this,&MainWindow::intervalSe
 connect(itemSelector,&ItemSelector::changed,this,&MainWindow::itemSelectorChanged);
 connect(messagesSelector,&CheckBoxSelector::changed,this,&MainWindow::messagesSelectorChanged);
 connect(ui->queryEdit,&QTextEdit::textChanged,this,&MainWindow::queryChanged);
-
 connect(ui->sendQuery,&QPushButton::clicked,this,&MainWindow::sendQueryClicked);
 
 toDebug("Setting SQL globals",DT_TRACE);
@@ -203,20 +202,26 @@ void MainWindow::updateQuery()
 {
 toDebug("updateQuery()",DT_TRACE);
 using namespace SQL_GLOBALS;
+ui->sendQuery->setEnabled(true);
 if (itemSelector->varSet().isEmpty())
   {
   if (messagesSelector->isChecked())
     ui->queryEdit->setPlainText(SqlSelectQuery::buildSelectQuery(buildMessageItems(DEFAULT_VALS_ITEMS),MESSAGES_TABLE));
   else
+    {
     ui->queryEdit->setPlainText(UI_GLOBALS::QUERY_EDIT_EMPTY);
+    ui->sendQuery->setEnabled(false);
+    }
   return;
   }
 
-QList<SqlFilter> filters = itemSelector->getFilters();
+QList<SqlFilter> filters = {};
+
+filters.append(SqlFilter(VARNAME,itemSelector->varSet()));
 filters.append(SqlFilter(DATETIME,intervalSelector->getInterval()));
 QString additional = nullptr;
 if (messagesSelector->isChecked())
-    additional = SqlSelectQuery::buildSelectQuery(buildMessageItems(DEFAULT_VALS_ITEMS),MESSAGES_TABLE,{},{filters.at(0)});
+  additional = SqlSelectQuery::buildSelectQuery(buildMessageItems(DEFAULT_VALS_ITEMS),MESSAGES_TABLE,{},{filters.at(0)});
 
 
 ui->queryEdit->setPlainText(SqlSelectQuery::buildUnion(SqlSelectQuery::buildSelectQuery(DEFAULT_VALS_ITEMS,VALUES_TABLE,

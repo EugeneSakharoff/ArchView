@@ -6,15 +6,18 @@ namespace UI_GLOBALS {
 const QString ALIAS_FOR_ALL      = ui.value("ui/ALIAS_FOR_ALL","...").toString();
 const QString ALIAS_FOR_MESSAGES = ui.value("ui/ALIAS_FOR_MESSAGES","Сообщения").toString();
 const QString ALIAS_FOR_ADD      = ui.value("ui/ALIAS_FOR_ADD","+").toString();
-const QString ALIAS_FOR_REMOVE   = ui.value("ui/ALIAS_FOR_ADD","-").toString();
-const QString ALIAS_FOR_SOLO     = ui.value("ui/ALIAS_FOR_ADD","S").toString();
-const QString ALIAS_FOR_MUTE     = ui.value("ui/ALIAS_FOR_ADD","M").toString();
-const QString ALIAS_FOR_RESET    = ui.value("ui/ALIAS_FOR_ADD",QString(QChar(8634))).toString();
-const QString PLACEHOLDER        = ui.value("ui/ALIAS_FOR_ADD","").toString();
+const QString ALIAS_FOR_ADD_ALL  = ui.value("ui/ALIAS_FOR_ADD_ALL","+").toString();
+const QString ALIAS_FOR_REMOVE   = ui.value("ui/ALIAS_FOR_REMOVE","-").toString();
+const QString ALIAS_FOR_REMOVE_ALL = ui.value("ui/ALIAS_FOR_REMOVE_ALL","-").toString();
+const QString ALIAS_FOR_SOLO     = ui.value("ui/ALIAS_FOR_SOLO","S").toString();
+const QString ALIAS_FOR_MUTE     = ui.value("ui/ALIAS_FOR_MUTE","M").toString();
+const QString ALIAS_FOR_RESET    = ui.value("ui/ALIAS_FOR_RESET",QString(QChar(8634))).toString();
+const QString PLACEHOLDER        = ui.value("ui/PLACEHOLDER","").toString();
 
 const int ELEMENT_HEIGHT          = ui.value("ui/ELEMENT_HEIGHT","22").toInt();
 const int LABEL_WIDTH             = ui.value("ui/LABEL_WIDTH","70").toInt();
 const int BUTTON_WIDTH            = ui.value("ui/BUTTON_WIDTH","18").toInt();
+const int BIG_BUTTON_WIDTH        = ui.value("ui/BIG_BUTTON_WIDTH","18").toInt();
 const int CONTROLS_TIMER_INTERVAL = ui.value("ui/CONTROLS_TIMER_INTERVAL","100").toInt();
 
 const QColor COMBOBOX_SELECTED_FOREGROUND    = QColor(Qt::black);
@@ -51,9 +54,11 @@ QList<int> VIEW_CONTROLS_SPLITTER_SIZES = {500,1};
 QList<int> CONTROLS_QUERY_SPLITTER_SIZES = {1,500};
 }
 
-void button_stylesheet(QWidget *object,QString color, int width,int radius)
+void button_stylesheet(QWidget *object,const QString& color,const int width,const int radius)
 {
-object->setStyleSheet(QString("#%1 {border-style: outset;"
+object->setStyleSheet(QString("#%1 {border-style: inset;"
+                              "margin-left: 10px;"
+                              "margin-right: 10px;"
                               "border-width: %2 px;"
                               "border-radius: %3 px;"
                               "border-color: %4}").arg(object->objectName()).arg(width).arg(radius).arg(color));

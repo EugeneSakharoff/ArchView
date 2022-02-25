@@ -1,6 +1,6 @@
 #include "checkboxselector.h"
 
-CheckBoxSelector::CheckBoxSelector(QWidget *parent, QString labeltext):ControlElement(parent,labeltext)
+CheckBoxSelector::CheckBoxSelector(QWidget *parent,const QString& labeltext):ControlElement(parent,labeltext)
 {
 checkBox = new QCheckBox(groupBox);
 layout->addWidget(checkBox);

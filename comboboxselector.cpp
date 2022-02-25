@@ -1,13 +1,12 @@
 #include "comboboxselector.h"
 
-ComboBoxSelector::ComboBoxSelector(QWidget *parent, QString labeltext, bool withButtons):ControlElement(parent,labeltext)
+ComboBoxSelector::ComboBoxSelector(QWidget *parent, const QString& labeltext, bool withButtons):ControlElement(parent,labeltext)
 {
 comboBox = new QComboBox(groupBox);
 //addButton = new QPushButton(groupBox);
 //soloButton = new QPushButton(groupBox);
 resetButton = new QPushButton(groupBox);
 layout->addWidget(comboBox);
-current_set = {};
 if (withButtons)
   {
   //addButton->setMaximumSize(UI_GLOBALS::BUTTON_WIDTH,UI_GLOBALS::ELEMENT_HEIGHT);
@@ -136,7 +135,3 @@ QString ComboBoxSelector::currentText()
 return comboBox->currentText();
 }
 
-QSet<QString> ComboBoxSelector::currentSet()
-{
-return current_set;
-}

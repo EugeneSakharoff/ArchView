@@ -8,7 +8,7 @@ class CheckBoxSelector : public ControlElement
 {
     Q_OBJECT
 public:
-    CheckBoxSelector(QWidget *parent, QString labeltext);
+    CheckBoxSelector(QWidget *parent, const QString& labeltext);
     ~CheckBoxSelector();
     bool isChecked();
     virtual bool init(QSqlQuery* query);

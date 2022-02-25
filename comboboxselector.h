@@ -15,7 +15,7 @@ class ComboBoxSelector : public ControlElement
 {
     Q_OBJECT
 public:
-    ComboBoxSelector(QWidget *parent, QString labeltext,bool withButtons);
+    ComboBoxSelector(QWidget *parent, const QString& labeltext,bool withButtons);
     ~ComboBoxSelector();
     virtual bool init(QSqlQuery* query);
     bool init(QSqlQueryModel* model, const int model_col=0, QDataWidgetMapper* mapper=nullptr, const int mapper_sec=0, const QByteArray &propertyName="");
@@ -36,7 +36,6 @@ signals:
 private:
     QComboBox *comboBox;
     QPushButton *resetButton;
-    QSet<QString> current_set;
 };
 
 #endif // COMBOBOXSELECTOR_H

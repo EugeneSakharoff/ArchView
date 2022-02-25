@@ -3,9 +3,11 @@
 
 #include <QObject>
 #include <QWidget>
+#include <QListView>>
 #include "sql_query.h"
 #include "database.h"
 #include "comboboxselector.h"
+#include "controlbuttons.h"
 
 
 
@@ -32,6 +34,7 @@ signals:
     void changed();
 
 private:
+    void addValue();
     QSqlQueryModel* model;
     QSqlQuery *init_query;
     QSqlQueryModel* group_model;
@@ -39,9 +42,8 @@ private:
     ComboBoxSelector* varSelector;
     ComboBoxSelector* groupSelector;
     ComboBoxSelector* descrSelector;
-    QPushButton* addButton;
-    QPushButton* soloButton;
-    QPushButton* resetButton;
+    ControlButtons* buttons;
+    QSet<QString> current_set;
 };
 
 #endif // ITEMSELECTOR_H

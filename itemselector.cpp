@@ -7,6 +7,7 @@ ItemSelector::ItemSelector(QWidget* parent)
 groupSelector = new ComboBoxSelector(parent, "Группа",true);
 varSelector = new ComboBoxSelector(parent, "Переменная",true);
 descrSelector = new ComboBoxSelector(parent, "Описание",false);
+buttons = new ControlButtons(parent,"");
 
 model = new QSqlQueryModel(this);
 group_model = new QSqlQueryModel(this);
@@ -19,10 +20,10 @@ ItemSelector::~ItemSelector()
 delete varSelector;
 delete groupSelector;
 delete descrSelector;
+delete buttons;
 delete model;
 delete group_model;
 delete mapper;
-
 }
 
 QList<SqlFilter> ItemSelector::getFilters()
@@ -35,13 +36,8 @@ QList<SqlFilter> ItemSelector::getFilters()
 
 QSet<QString> ItemSelector::varSet()
 {
-QSet<QString> var_set;
-if (varSelector->currentText().isEmpty())
-  for (int i=0;i<model->rowCount();++i)
-    var_set.insert(model->data(model->index(i,0)).toString());
-else
-    var_set.insert(varSelector->currentText());
-return var_set;
+
+return current_set;
 }
 
 
@@ -58,20 +54,22 @@ descrSelector->init(model,2,mapper,2);
 connect(descrSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::descrSelectorChanged);
 connect(groupSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::groupSelectorChanged);
 connect(varSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::varSelectorChanged);
-qDebug()<<mapper->currentIndex();
-//connect(varSelector,&ComboBoxSelector::addClicked,this,&ItemSelector::varSelectorChanged);
-//connect(varSelector,&ComboBoxSelector::soloClicked,this,&ItemSelector::varSelectorChanged);
-//connect(groupSelector,&ComboBoxSelector::addClicked,this,&ItemSelector::groupSelectorChanged);
-//connect(groupSelector,&ComboBoxSelector::soloClicked,this,&ItemSelector::groupSelectorChanged);
-//mapper->toFirst();
+connect(buttons,&ControlButtons::addClicked,this,&ItemSelector::addValue);
+current_set = {};
+addValue();
+
 }
 
 void ItemSelector::init()
 {
 toDebug("ItemSelector init (empty)",DT_CONTROLS);
+disconnect(descrSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::descrSelectorChanged);
+disconnect(groupSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::groupSelectorChanged);
+disconnect(varSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::varSelectorChanged);
 varSelector->init();
 groupSelector->init();
 descrSelector->init();
+current_set = {};
 }
 
 void ItemSelector::reset()
@@ -83,9 +81,27 @@ descrSelector->reset();
 
 void ItemSelector::varSelectorChanged()
 {
+QString g,v;
+g = groupSelector->currentText();
+if (g.isEmpty()) g="Все";
+v = varSelector->currentText();
 mapper->setCurrentIndex(varSelector->currentIndex());
 if (varSelector->currentIndex()<0)
   descrSelector->reset();
+if (v.isEmpty())
+  {
+  v = "Все";
+  if (current_set.isEmpty())
+    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_ADD_ALL);
+  else
+    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE_ALL);
+  }
+else
+  if (current_set.contains(v))
+    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE);
+  else
+    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_ADD);
+buttons->setLabelText(QString("Группа: %1; Переменная: %2").arg(g,v));
 emit changed();
 }
 
@@ -113,5 +129,32 @@ descrSelector->reset();
 varSelector->reset();
 }
 
+void ItemSelector::addValue()
+{
+if (!varSelector->currentText().isEmpty())
+  if (current_set.contains(varSelector->currentText()))
+    {
+    current_set.remove(varSelector->currentText());
+    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_ADD);
+    }
+  else
+    {
+    current_set.insert(varSelector->currentText());
+    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE);
+    }
+else
+  if (current_set.isEmpty())
+    {
+    for (int i=0;i<model->rowCount();++i)
+      current_set.insert(model->data(model->index(i,0)).toString());
+    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE_ALL);
+    }
+  else
+    {
+    current_set = {};
+    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_ADD_ALL);
+    }
+emit changed();
 
+}
 

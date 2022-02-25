@@ -17,6 +17,8 @@ extern const QString ALIAS_FOR_ALL;
 extern const QString ALIAS_FOR_MESSAGES;
 extern const QString ALIAS_FOR_ADD;
 extern const QString ALIAS_FOR_REMOVE;
+extern const QString ALIAS_FOR_ADD_ALL;
+extern const QString ALIAS_FOR_REMOVE_ALL;
 extern const QString ALIAS_FOR_SOLO;
 extern const QString ALIAS_FOR_MUTE;
 extern const QString ALIAS_FOR_RESET;
@@ -25,6 +27,7 @@ extern const QString PLACEHOLDER;
 extern const int ELEMENT_HEIGHT;
 extern const int LABEL_WIDTH;
 extern const int BUTTON_WIDTH;
+extern const int BIG_BUTTON_WIDTH;
 extern const int CONTROLS_TIMER_INTERVAL;
 extern const QColor COMBOBOX_SELECTED_FOREGROUND;
 extern const QColor COMBOBOX_SELECTED_BACKGROUND;
@@ -58,5 +61,5 @@ extern const QString STATUS_CURRENT_DB;
 
 }
 
-void button_stylesheet(QWidget *object,QString color, int width=2,int radius=1);
+void button_stylesheet(QWidget *object,const QString& color,const int width=1,const int radius=0);
 #endif // UI_H

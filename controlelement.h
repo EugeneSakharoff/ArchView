@@ -18,7 +18,7 @@ class ControlElement: public QObject
 {
     Q_OBJECT
 public:
-    ControlElement(QWidget *parent, QString labeltext);
+    ControlElement(QWidget *parent, const QString& labeltext);
     ~ControlElement();
     virtual void init()=0;
     virtual void reset()=0;

@@ -22,7 +22,7 @@ class TimeSelector : public ControlElement
 {
     Q_OBJECT
 public:
-    TimeSelector(QWidget *parent,const QString labeltext);
+    TimeSelector(QWidget *parent,const QString &labeltext);
     ~TimeSelector();
     QString getTimeStr() const;
     QDateTime getTime() const;

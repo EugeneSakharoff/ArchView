@@ -34,7 +34,7 @@ void TimeEdit::timerEvent(QTimerEvent *event)
 }
 
 
-TimeSelector::TimeSelector(QWidget *parent,const QString labeltext):ControlElement(parent,labeltext)
+TimeSelector::TimeSelector(QWidget *parent,const QString &labeltext):ControlElement(parent,labeltext)
 {
 timeEdit = new TimeEdit(groupBox);
 timeEdit->setDisplayFormat(GLOBALS::DEFAULT_DATETIME_FORMAT);

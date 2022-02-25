@@ -1,7 +1,7 @@
 #include "controlelement.h"
 
 
-ControlElement::ControlElement(QWidget *parent, QString labeltext)
+ControlElement::ControlElement(QWidget *parent, const QString& labeltext)
 {
 groupBox = new QGroupBox(parent);
 groupBox->setFlat(true);

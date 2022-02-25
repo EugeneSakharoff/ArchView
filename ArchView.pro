@@ -11,6 +11,7 @@ CONFIG += c++11
 SOURCES += \
     checkboxselector.cpp \
     comboboxselector.cpp \
+    controlbuttons.cpp \
     controlelement.cpp \
     customdelegate.cpp \
     customquerymodel.cpp \
@@ -36,6 +37,7 @@ SOURCES += \
 HEADERS += \
     checkboxselector.h \
     comboboxselector.h \
+    controlbuttons.h \
     controlelement.h \
     customdelegate.h \
     customquerymodel.h \
