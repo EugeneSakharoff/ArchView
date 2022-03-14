@@ -20,6 +20,7 @@ class OptionsWindow : public QDialog
 public:
     explicit OptionsWindow(QWidget *parent = nullptr);
     ~OptionsWindow();
+    void accepted();
 
 private:
     Ui::OptionsWindow *ui;

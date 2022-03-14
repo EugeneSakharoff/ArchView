@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>483</width>
-    <height>365</height>
+    <width>485</width>
+    <height>408</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,26 @@
    <item>
     <widget class="QTabWidget" name="tabWidgetMain">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
+     <widget class="QWidget" name="tabInterface">
+      <attribute name="title">
+       <string>Общие</string>
+      </attribute>
+      <widget class="QCheckBox" name="checkBoxConnectOnStart">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>20</y>
+         <width>221</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Подключать БД при запуске</string>
+       </property>
+      </widget>
+     </widget>
      <widget class="QWidget" name="tabDB">
       <attribute name="title">
        <string>Настройки БД</string>
@@ -27,7 +45,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidgetDB">
          <property name="currentIndex">
-          <number>0</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="tabGeneral">
           <attribute name="title">
@@ -71,12 +89,18 @@
              </property>
             </widget>
            </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="editPort"/>
+           </item>
            <item row="4" column="0">
             <widget class="QLabel" name="labelServiceName">
              <property name="text">
               <string>Имя сервисной БД:</string>
              </property>
             </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QLineEdit" name="editServiceName"/>
            </item>
            <item row="5" column="0">
             <widget class="QLabel" name="labelServiceUser">
@@ -85,6 +109,9 @@
              </property>
             </widget>
            </item>
+           <item row="5" column="1">
+            <widget class="QLineEdit" name="editServiceUser"/>
+           </item>
            <item row="6" column="0">
             <widget class="QLabel" name="labelServicePassword">
              <property name="text">
@@ -92,34 +119,18 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
-            <widget class="QLineEdit" name="editPort"/>
-           </item>
-           <item row="4" column="1">
-            <widget class="QLineEdit" name="editServiceName"/>
-           </item>
-           <item row="5" column="1">
-            <widget class="QLineEdit" name="editServiceUser"/>
-           </item>
            <item row="6" column="1">
             <widget class="QLineEdit" name="editServicePassword"/>
            </item>
-           <item row="7" column="1">
-            <widget class="QCheckBox" name="checkBoxConnectOnStart">
+           <item row="7" column="0">
+            <widget class="QLabel" name="labelServicePort">
              <property name="text">
-              <string/>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
+              <string>Порт сервисной БД:</string>
              </property>
             </widget>
            </item>
-           <item row="7" column="0">
-            <widget class="QLabel" name="labelConnectOnStart">
-             <property name="text">
-              <string>Подключаться при запуске:</string>
-             </property>
-            </widget>
+           <item row="7" column="1">
+            <widget class="QLineEdit" name="editServicePort"/>
            </item>
           </layout>
          </widget>
@@ -127,35 +138,173 @@
           <attribute name="title">
            <string>Таблица описаний</string>
           </attribute>
+          <layout class="QFormLayout" name="formLayout_2">
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelDescrTableNae">
+             <property name="text">
+              <string>Наименование таблицы:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="editDescrTableName"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labelID">
+             <property name="text">
+              <string>Столбец ID:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="editID"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelVarName">
+             <property name="text">
+              <string>Столбец имени переменной:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="editVarName"/>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="labelVarDescr">
+             <property name="text">
+              <string>Столбец описания переменной:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="editVarDescr"/>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="labelVarUnits">
+             <property name="text">
+              <string>Столбец единиц измерения:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QLineEdit" name="editVarUnits"/>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="labelGroupId">
+             <property name="text">
+              <string>Столбец ID группы:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QLineEdit" name="editGroupID"/>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="labelVarPrec">
+             <property name="text">
+              <string>Столбец точности значения:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QLineEdit" name="editVarPrec"/>
+           </item>
+          </layout>
          </widget>
          <widget class="QWidget" name="tabValues">
           <attribute name="title">
            <string>Таблица значений</string>
           </attribute>
+          <layout class="QFormLayout" name="formLayout_3">
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelValsTableName">
+             <property name="text">
+              <string>Наименование таблицы значений:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="editValsTableName"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labelVarID">
+             <property name="text">
+              <string>Столбец ID переменной:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="editVarID"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelValue">
+             <property name="text">
+              <string>Столбец значения:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="editValue"/>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="labelTime">
+             <property name="text">
+              <string>Время изменения:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="editTime"/>
+           </item>
+          </layout>
          </widget>
          <widget class="QWidget" name="tabMessages">
           <attribute name="title">
            <string>Таблица сообщений</string>
           </attribute>
+          <layout class="QFormLayout" name="formLayout_4">
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelMsgsTableName">
+             <property name="text">
+              <string>Наименование таблицы сообщений:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="editMsgsTableName"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labelMsgs">
+             <property name="text">
+              <string>Столбец сообщений:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="editMsgs"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tabGroups">
+          <attribute name="title">
+           <string>Таблица групп</string>
+          </attribute>
+          <layout class="QFormLayout" name="formLayout_5">
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelGroupsTableName">
+             <property name="text">
+              <string>Наименование таблицы групп:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="editGroupsTableName"/>
+           </item>
+          </layout>
          </widget>
         </widget>
        </item>
       </layout>
-     </widget>
-     <widget class="QWidget" name="tabInterface">
-      <attribute name="title">
-       <string>Интерфейс</string>
-      </attribute>
-     </widget>
-     <widget class="QWidget" name="tab_3">
-      <attribute name="title">
-       <string>Общие</string>
-      </attribute>
-     </widget>
-     <widget class="QWidget" name="tab_4">
-      <attribute name="title">
-       <string>Тестовая БД</string>
-      </attribute>
      </widget>
     </widget>
    </item>

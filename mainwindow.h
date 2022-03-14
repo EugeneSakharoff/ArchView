@@ -63,7 +63,7 @@ private:
 
     void updatePlot();          //обновить график
     void createMenuBar();       //создание главного меню окна
-    void setDataBase(const DBConnectOptions &options);         //инициализация БД
+    void setDataBase(const DBConnectParams &params);         //инициализация БД
     void initModel();            //инициализация модели представления данных
     void initPlot();             //инициализация графика
     void changeLayout(); //сменить вид

@@ -26,41 +26,47 @@ extern const QString CONFIG_FILE;
 
 namespace GLOBALS {
 
-extern const bool DEBUG_TRACE;
-extern const bool DEBUG_SQL;
-extern const bool DEBUG_ERRORS;
-extern const bool DEBUG_WARNINGS;
-extern const bool DEBUG_CONTROLS;
-extern const bool DEBUG_PLOT;
-extern const bool DEBUG_TABLE;
-extern const bool DEBUG_TEST_TABLES;
-extern const bool DEBUG_DB_CONNECTION;
+extern bool DEBUG_TRACE;
+extern bool DEBUG_SQL;
+extern bool DEBUG_ERRORS;
+extern bool DEBUG_WARNINGS;
+extern bool DEBUG_CONTROLS;
+extern bool DEBUG_PLOT;
+extern bool DEBUG_TABLE;
+extern bool DEBUG_TEST_TABLES;
+extern bool DEBUG_DB_CONNECTION;
 
 
 
-extern const QString  DEFAULT_DB_NAME;
-extern const QString  SERVICE_DB_NAME;
-extern const QString  DEFAULT_DB_USERNAME;
-extern const QString  DEFAULT_DB_PASSWORD;
-extern const QString  DEFAULT_DB_DRIVER;
-extern const QString  DEFAULT_DB_HOST;
-extern const QString  DEFAULT_DB_HOSTADDRESS;
-extern const QString  DEFAULT_DB_PORT;
-extern const QStringList AVAILABLE_DRIVERS;
+extern QString  DEFAULT_DB_NAME;
+extern QString  SERVICE_DB_NAME;
+extern QString  DEFAULT_DB_USERNAME;
+extern QString  DEFAULT_DB_PASSWORD;
+extern QString  SERVICE_DB_USERNAME;
+extern QString  SERVICE_DB_PASSWORD;
+extern QString  DEFAULT_DB_DRIVER;
+extern QString  DEFAULT_DB_HOST;
+extern QString  DEFAULT_DB_HOSTADDRESS;
+extern QString  DEFAULT_DB_PORT;
+extern QString  SERVICE_DB_HOST;
+extern QString  SERVICE_DB_HOSTADDRESS;
+extern QString  SERVICE_DB_PORT;
+extern QStringList AVAILABLE_DRIVERS;
 
-extern const QString DEFAULT_DATETIME_FORMAT;
+extern QString DEFAULT_DATETIME_FORMAT;
 
 
 
-extern const bool CONNECT_ON_STARTUP;
-extern const bool MESSAGES_ON_BY_DEFAULT;
-extern const bool HIDE_COLUMNS_BY_DEFAULT;
+extern bool CONNECT_ON_STARTUP;
+extern bool MESSAGES_ON_BY_DEFAULT;
+extern bool HIDE_COLUMNS_BY_DEFAULT;
 
-extern const QString ABOUT_TEXT;
+extern QString ABOUT_TEXT;
 extern QMap<QString, QString> HOSTS_MAP;
 }
 
 void readHostsList();
+void readSettings();
 void toDebug(const QVariant &msg, char type=DT_DEFAULT);
 
 #endif // GLOBALS_H

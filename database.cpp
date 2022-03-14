@@ -1,12 +1,12 @@
 #include "database.h"
 
-DBConnectOptions::DBConnectOptions(const QString &name,
-                                   const QString &host,
-                                   const QString &addr,
-                                   const QString &user,
-                                   const QString &password,
-                                   const QString &port,
-                                   const QString &driver)
+DBConnectParams::DBConnectParams(const QString &name,
+                                 const QString &host,
+                                 const QString &addr,
+                                 const QString &user,
+                                 const QString &password,
+                                 const QString &port,
+                                 const QString &driver)
 {
 //TODO: проверка всех аргументов через RegExp
 QSettings hosts(HOSTS_CONFIG_FILE,QSettings::IniFormat);
@@ -24,21 +24,21 @@ else
   this->hostAddress = hosts.value(this->hostName,GLOBALS::DEFAULT_DB_HOSTADDRESS).toString();
 }
 
-DBConnectOptions::~DBConnectOptions()
+DBConnectParams::~DBConnectParams()
 {
 toDebug("DBConnectOptions destructor "+name,DT_DATABASE);
 }
 
 
-QString DBConnectOptions::getDBName() const {return name;}
-QString DBConnectOptions::getUserName() const{return user;}
-QString DBConnectOptions::getPassword() const{return password;}
-QString DBConnectOptions::getPort() const{return port;}
-QString DBConnectOptions::getHostName() const{return hostName;}
-QString DBConnectOptions::getHostAddr() const{return hostAddress;}
-QString DBConnectOptions::getDriver() const{return driver;}
+QString DBConnectParams::getDBName() const {return name;}
+QString DBConnectParams::getUserName() const{return user;}
+QString DBConnectParams::getPassword() const{return password;}
+QString DBConnectParams::getPort() const{return port;}
+QString DBConnectParams::getHostName() const{return hostName;}
+QString DBConnectParams::getHostAddr() const{return hostAddress;}
+QString DBConnectParams::getDriver() const{return driver;}
 
-QString DBConnectOptions::toConnectOptionsString() const
+QString DBConnectParams::toConnectParamsString() const
 {
 QString result = "";
 if (hostName != nullptr)
@@ -71,9 +71,9 @@ QSqlDatabase* DataBase::getDbPointer()
 return &db;
 }
 
-DBConnectOptions* DataBase::getConnectOptions()
+DBConnectParams* DataBase::getConnectParams()
 {
-return &connectOptions;
+return &connectParams;
 }
 
 bool DataBase::isConnected()
@@ -82,20 +82,20 @@ return connected;
 }
 
 //соединение с БД, либо создание, если БД не существует
-bool DataBase::connectDataBase(const DBConnectOptions &options,
+bool DataBase::connectDataBase(const DBConnectParams &params,
                                const bool createIfNotAvailable)
 {
-switch(openDataBase(options))
+switch(openDataBase(params))
   {
   case 0: //соединение удалось
-    connectOptions = options;
+    connectParams = params;
     connected = true;
     return true;
   case 1: //БД с таким именем не существует
     if (createIfNotAvailable)
       {
-      createDataBase(options.getDBName());    //создание БД
-      return connectDataBase(options,false);   //попытка соединиться еще раз
+      createDataBase(params.getDBName());    //создание БД
+      return connectDataBase(params,false);   //попытка соединиться еще раз
       }
     break;
   }
@@ -104,17 +104,17 @@ switch(openDataBase(options))
 }
 
 //внутренняя функция для установки соединения с БД
-char DataBase::openDataBase(const DBConnectOptions &options)
+char DataBase::openDataBase(const DBConnectParams &params)
 {
-toDebug("connecting to "+options.getDBName()+" DB with driver = "+options.getDriver()+" on host= "+options.getHostName(),DT_DATABASE);
+toDebug("connecting to "+params.getDBName()+" DB with driver = "+params.getDriver()+" on host= "+params.getHostName(),DT_DATABASE);
 //создание и инициализация QSqlDatabase
-db = QSqlDatabase::addDatabase(options.getDriver(),options.getDBName());
-toDebug("DB added, setting options..."+options.toConnectOptionsString(),DT_DATABASE);
-db.setConnectOptions(options.toConnectOptionsString());
+db = QSqlDatabase::addDatabase(params.getDriver(),params.getDBName());
+toDebug("DB added, setting options..."+params.toConnectParamsString(),DT_DATABASE);
+db.setConnectOptions(params.toConnectParamsString());
 toDebug("Options set, opening...",DT_DATABASE);
 if (!db.open()) //Если соединение не удалось
   {
-  if (db.lastError().databaseText() == QString("ВАЖНО:  база данных \""+options.getDBName()+"\" не существует\n"))    //если БД с таким именем не существует
+  if (db.lastError().databaseText() == QString("ВАЖНО:  база данных \""+params.getDBName()+"\" не существует\n"))    //если БД с таким именем не существует
     {
     toDebug("DB not found "+db.lastError().nativeErrorCode()+db.lastError().text()+db.lastError().type(),DT_WARNING);
     return 1;
@@ -130,20 +130,24 @@ return 0;
 }
 
 //создание БД
-bool DataBase::createDataBase(const QString &name)
+bool DataBase::createDataBase(const DBConnectParams &params)
 {
 toDebug("Attemting to create DB, opening "+QString(GLOBALS::SERVICE_DB_NAME),DT_DATABASE);
-if (openDataBase(DBConnectOptions(GLOBALS::SERVICE_DB_NAME))==0) //если удалось соединиться с сервисной БД
+if (openDataBase(DBConnectParams(GLOBALS::SERVICE_DB_NAME,
+                                 GLOBALS::SERVICE_DB_HOST,
+                                 GLOBALS::SERVICE_DB_HOSTADDRESS,
+                                 GLOBALS::SERVICE_DB_USERNAME,
+                                 GLOBALS::SERVICE_DB_PASSWORD))==0) //если удалось соединиться с сервисной БД
   {
   QSqlQuery query(db);
-  if (query.exec("CREATE DATABASE "+name+" WITH OWNER = postgres ENCODING = 'UTF8'TABLESPACE = pg_default CONNECTION LIMIT = -1;"))
+  if (query.exec("CREATE DATABASE "+params.getDBName()+" WITH OWNER = "+params.getUserName()+" ENCODING = 'UTF8'TABLESPACE = pg_default CONNECTION LIMIT = -1;"))
     {
     //если запрос на создание БД выпонился успешно
     toDebug(" DB created successfully",DT_DATABASE);
     return true;
     }
   //запрос на создание БД не выполнился
-  toDebug("Failed to create "+name+query.lastError().text(),DT_ERROR);
+  toDebug("Failed to create "+params.getDBName()+query.lastError().text(),DT_ERROR);
   db.close();
   toDebug("service DB closed",DT_DATABASE);
   }

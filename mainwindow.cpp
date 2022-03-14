@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-
+#include <QCoreApplication>
 
 
 
@@ -7,11 +7,13 @@
 //конструктор
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),ui(new Ui::MainWindow)
 {
-QSettings settings(CONFIG_FILE,QSettings::IniFormat);
+
 toDebug("MainWindow constructor",DT_TRACE);
 ui->setupUi(this);
 currentLayout = true;
 ui->controlPanel->setLayout(new QVBoxLayout(ui->controlPanel));
+
+readSettings();
 
 itemSelector = new ItemSelector(ui->controlPanel);
 messagesSelector = new CheckBoxSelector(ui->controlPanel, UI_GLOBALS::ALIAS_FOR_MESSAGES);
@@ -33,8 +35,10 @@ initModel();
 resetInterface();
 dbInfoLabel = new QLabel(statusBar());
 statusBar()->addPermanentWidget(dbInfoLabel);
+qDebug()<<QCoreApplication::applicationDirPath();
+QSettings settings(CONFIG_FILE,QSettings::IniFormat);
 if (settings.value("globals/CONNECT_ON_STARTUP",GLOBALS::CONNECT_ON_STARTUP).toBool())
-    setDataBase(*db->getConnectOptions());
+    setDataBase(*db->getConnectParams());
 }
 
 //деструктор
@@ -61,12 +65,12 @@ ui->controls_query_splitter->setSizes(UI_GLOBALS::CONTROLS_QUERY_SPLITTER_SIZES)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //инициализация БД
-void MainWindow::setDataBase(const DBConnectOptions &options)
+void MainWindow::setDataBase(const DBConnectParams &params)
 {
 toDebug("setDataBase()",DT_TRACE);
-if (db->connectDataBase(options))
+if (db->connectDataBase(params))
   {
-  dbInfoLabel->setText(UI_GLOBALS::STATUS_CURRENT_DB.arg(options.getDBName(),options.getHostName()));
+  dbInfoLabel->setText(UI_GLOBALS::STATUS_CURRENT_DB.arg(params.getDBName(),params.getHostName()));
 
   //создать и заполнить тестовые таблицы
   if (test_tables_structure::create_test_tables_flag)
@@ -217,8 +221,11 @@ if (itemSelector->varSet().isEmpty())
 
 QList<SqlFilter> filters = {};
 
-filters.append(SqlFilter(VARNAME,itemSelector->varSet()));
+
 filters.append(SqlFilter(DATETIME,intervalSelector->getInterval()));
+if (itemSelector->varSet().count() != itemSelector->fullSet().count())
+  filters.append(SqlFilter(VARNAME,itemSelector->varSet()));
+
 QString additional = nullptr;
 if (messagesSelector->isChecked())
   additional = SqlSelectQuery::buildSelectQuery(buildMessageItems(DEFAULT_VALS_ITEMS),MESSAGES_TABLE,{},{filters.at(0)});
@@ -284,7 +291,7 @@ if (ui->queryEdit->toPlainText().split(" ").at(0).toUpper() == "SELECT")
   model->updateQuery(ui->queryEdit->toPlainText(),SQL_GLOBALS::DEFAULT_ALIASES,*db->getDbPointer());
   button_stylesheet(ui->sendQuery,UI_GLOBALS::QUERY_EXECUTED_COLOR);
   ui->tableView->updateColumns();
-  //updatePlot();
+  updatePlot();
   }
 else
   {
@@ -343,12 +350,12 @@ void MainWindow::optionsRejected()
 void MainWindow::showOpenDBDialog()
 {
 toDebug("showOpenDBDialog()",DT_TRACE);
-OpenDBDialog* dialog = new OpenDBDialog(*db->getConnectOptions(),this);
-DBConnectOptions* options = dialog->getDBParams();
-if (options != nullptr)
+OpenDBDialog* dialog = new OpenDBDialog(*db->getConnectParams(),this);
+DBConnectParams* params = dialog->getDBParams();
+if (params != nullptr)
   {
   if (db->isConnected()) closeDB();
-  setDataBase(*options);
+  setDataBase(*params);
   }
 delete dialog;
 }
@@ -357,7 +364,7 @@ void MainWindow::showOptionsDialog()
 {
 toDebug("showOptionsDialog()",DT_TRACE);
 OptionsWindow* dialog = new OptionsWindow(this);
-connect(dialog,&QDialog::accepted,this,&MainWindow::optionsAccepted);
+dialog->show();
 }
 
 void MainWindow::closeDB()

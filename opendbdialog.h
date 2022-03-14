@@ -18,9 +18,9 @@ class OpenDBDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit OpenDBDialog(const DBConnectOptions &options, QWidget *parent = nullptr);
+    explicit OpenDBDialog(const DBConnectParams &params, QWidget *parent = nullptr);
     ~OpenDBDialog();
-    DBConnectOptions* getDBParams();
+    DBConnectParams* getDBParams();
 private slots:
     void editHostChanged();
     void checkOptions();

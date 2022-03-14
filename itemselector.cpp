@@ -26,19 +26,19 @@ delete group_model;
 delete mapper;
 }
 
-QList<SqlFilter> ItemSelector::getFilters()
-{
-  QList<SqlFilter> filters;
-  if (!varSelector->currentText().isEmpty())
-      filters.append(SqlFilter(SQL_GLOBALS::VARNAME,varSet()));
-  return filters;
-}
-
 QSet<QString> ItemSelector::varSet()
 {
-
 return current_set;
 }
+
+QSet<QString> ItemSelector::fullSet()
+{
+QSet<QString> res;
+for (int i=0;i<model->rowCount();++i)
+  res.insert(model->data(model->index(i,0)).toString());
+return res;
+}
+
 
 
 void ItemSelector::init(QSqlQuery *name_descr_query, QSqlQuery *group_query)

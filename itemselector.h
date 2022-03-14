@@ -3,8 +3,7 @@
 
 #include <QObject>
 #include <QWidget>
-#include <QListView>>
-#include "sql_query.h"
+#include <QListView>
 #include "database.h"
 #include "comboboxselector.h"
 #include "controlbuttons.h"
@@ -20,9 +19,8 @@ public:
     void init(QSqlQuery *name_descr_query, QSqlQuery *group_query);
     void init();
     void reset();
-    QList<SqlFilter> getFilters();
     QSet<QString> varSet();
-
+    QSet<QString> fullSet();
 
 
 public slots:

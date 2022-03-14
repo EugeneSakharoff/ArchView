@@ -576,7 +576,7 @@ void ctkRangeSlider::paintEvent( QPaintEvent* )
 
   // Create default colors based on the transfer function.
   //
-  QColor highlight = this->palette().color(QPalette::Normal, QPalette::Highlight);
+  QColor highlight = QColor::fromRgb(255,0,0);//this->palette().color(QPalette::Normal, QPalette::Highlight);
   QLinearGradient gradient;
   if (option.orientation == Qt::Horizontal)
     {
@@ -598,7 +598,7 @@ void ctkRangeSlider::paintEvent( QPaintEvent* )
 
   painter.setPen(QPen(highlight.darker(150), 0));
   painter.setBrush(gradient);
-  painter.drawRect( rangeBox.intersected(groove) );
+  //painter.drawRect( rangeBox.intersected(groove) );
 
   //  -----------------------------------
   // Render the sliders

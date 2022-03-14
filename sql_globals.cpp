@@ -3,8 +3,98 @@
 
 namespace SQL_GLOBALS {
 
-QSettings settings(CONFIG_FILE,QSettings::IniFormat);
+QString VALUES_TABLE;
+ QString DESCRIPTIONS_TABLE;
+ QString MESSAGES_TABLE;
+ QString GROUPS_TABLE;
 
+ QString ID_COLUMN;           //колонка первичного ключа (одинакова для всех таблиц)
+ QString VARID_COLUMN;        //колонка идентификатора переменной в таблице значений
+ QString NAME_COLUMN;         //имя переменной
+ QString DESCRIPTION_COLUMN;  //описание переменной
+ QString UNITS_COLUMN;        //единицы измерения
+ QString GROUPID_COLUMN;      //группа переменной
+ QString DATETIME_COLUMN;     //время изменения
+ QString PRECISION_COLUMN;    //точность пердставления
+ QString VALUE_COLUMN;        //значение
+ QString MESSAGE_COLUMN;      //текст сообщения
+
+//псевдонимы для столбцов
+ QString ALIAS_ID;
+ QString ALIAS_VARID;
+ QString ALIAS_VARNAME;
+ QString ALIAS_DESCR;
+ QString ALIAS_UNITS;
+ QString ALIAS_GROUPID;
+ QString ALIAS_GROUPNAME;
+ QString ALIAS_DATETIME;
+ QString ALIAS_DATE;
+ QString ALIAS_TIME;
+ QString ALIAS_PRECISION;
+ QString ALIAS_VALUE;
+ QString ALIAS_VALUE_RAW;
+
+ QString HEADER_ID;
+ QString HEADER_VARID;
+ QString HEADER_VARNAME;
+ QString HEADER_DESCR;
+ QString HEADER_UNITS;
+ QString HEADER_GROUPNAME;
+ QString HEADER_DATETIME;
+ QString HEADER_DATE;
+ QString HEADER_TIME;
+ QString HEADER_PRECISION;
+ QString HEADER_VALUE;
+ QString HEADER_VALUE_RAW;
+
+//выражения на SQL, получающие определенный столбец определенной таблицы
+ QString VALUES_ID;
+ QString DESCRIPTIONS_ID;
+ QString GROUPS_ID;
+ QString VARID;
+ QString VARNAME;
+ QString GROUPNAME;
+ QString VARDESCR;
+ QString UNITS;
+ QString GROUPID;
+ QString DATETIME;
+ QString PRECISION;
+ QString VALUE;
+ QString MESSAGE;
+
+//выражения для получения столбцов с псевдонимами и доп. опциями
+ QString SEL_ID;
+ QString SEL_VARID;
+ QString SEL_VARNAME;
+ QString SEL_VARDESCR;
+ QString SEL_UNITS;
+ QString SEL_GROUPNAME;
+ QString SEL_DATETIME;
+ QString SEL_DATE;
+ QString SEL_TIME;
+ QString SEL_PRECISION;
+ QString SEL_VALUE_RAW;
+ QString SEL_VALUE_ROUNDED;
+ QString SEL_VALUE_WITH_UNIT;
+ QString SEL_MESSAGE;
+
+//шаблоны запросов
+ join_t VALS_DESCR_JOIN;
+ join_t EMPTY_JOIN;
+
+//заголовки столбцов в таблице (каждому столбцу из БД соответствует название)
+ QMap<QString, QString> HEADERS_MAP;
+
+//сопоставление стлбцов vals->messages, чтобы корректно выполнялся union
+ QMap<QString, QString> VALS_MSGS_UNION_MAP;
+
+//значения для запросов по умолчанию
+ QStringList DEFAULT_VALS_ITEMS;
+ QStringList DEFAULT_ALIASES;
+ QStringList DEFAULT_PLOT_ITEMS;
+ QStringList DEFAULT_HIDDEN_COLUMNS;
+
+/*
 const QString VALUES_TABLE       = settings.value("sql/VALUES_TABLE",       "vals").toString();
 const QString DESCRIPTIONS_TABLE = settings.value("sql/DESCRIPTIONS_TABLE", "descriptions").toString();
 const QString MESSAGES_TABLE     = settings.value("sql/MESSAGES_TABLE",     "messages").toString();
@@ -124,6 +214,7 @@ const QStringList DEFAULT_HIDDEN_COLUMNS = QStringList({HEADERS_MAP.value(ALIAS_
                                                         HEADERS_MAP.value(ALIAS_UNITS)});
 
 const QStringList DEFAULT_PLOT_ITEMS = QStringList({SEL_DATETIME,SEL_VARNAME,SEL_VALUE_RAW});
+*/
 }
 
 QStringList buildMessageItems(QStringList valsItems)
