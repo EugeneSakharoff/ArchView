@@ -73,7 +73,7 @@ public:
   bool m_SymmetricMoves;
 
   QString m_HandleToolTip;
-
+  QMap<QString,double> m_SliderSections;
 private:
   Q_DISABLE_COPY(ctkRangeSliderPrivate);
 };
@@ -509,6 +509,19 @@ bool ctkRangeSlider::symmetricMoves()const
   return d->m_SymmetricMoves;
 }
 
+QMap<QString,double> ctkRangeSlider::sliderSections()const
+{
+  Q_D(const ctkRangeSlider);
+  return d->m_SliderSections;
+}
+
+void ctkRangeSlider::setSliderSections(QMap<QString,double> sect)
+{
+  Q_D(ctkRangeSlider);
+  d->m_SliderSections = sect;
+}
+
+
 // --------------------------------------------------------------------------
 void ctkRangeSlider::onRangeChanged(int _minimum, int _maximum)
 {
@@ -534,7 +547,6 @@ void ctkRangeSlider::paintEvent( QPaintEvent* )
   option.sliderValue = this->minimum() - this->maximum();
   option.sliderPosition = this->minimum() - this->maximum();
   painter.drawComplexControl(QStyle::CC_Slider, option);
-
   option.sliderPosition = d->m_MinimumPosition;
   const QRect lr = style()->subControlRect( QStyle::CC_Slider,
                                             &option,
@@ -551,54 +563,54 @@ void ctkRangeSlider::paintEvent( QPaintEvent* )
                                       &option,
                                       QStyle::SC_SliderGroove,
                                       this);
-  QRect rangeBox;
-  if (option.orientation == Qt::Horizontal)
-    {
-    rangeBox = QRect(
-      QPoint(qMin( lr.center().x(), ur.center().x() ), sr.center().y() - 2),
-      QPoint(qMax( lr.center().x(), ur.center().x() ), sr.center().y() + 1));
-    }
-  else
-    {
-    rangeBox = QRect(
-      QPoint(sr.center().x() - 2, qMin( lr.center().y(), ur.center().y() )),
-      QPoint(sr.center().x() + 1, qMax( lr.center().y(), ur.center().y() )));
-    }
 
-  // -----------------------------
-  // Render the range
-  //
+
+  QRect rangeBox=QRect(QPoint(qMin(lr.center().x(),ur.center().x()), sr.center().y() - 2),
+                       QPoint(qMax(lr.center().x(),ur.center().x()), sr.center().y() + 1));
+
   QRect groove = this->style()->subControlRect( QStyle::CC_Slider,
                                                 &option,
                                                 QStyle::SC_SliderGroove,
                                                 this );
   groove.adjust(0, 0, -1, 0);
 
-  // Create default colors based on the transfer function.
-  //
-  QColor highlight = QColor::fromRgb(255,0,0);//this->palette().color(QPalette::Normal, QPalette::Highlight);
-  QLinearGradient gradient;
-  if (option.orientation == Qt::Horizontal)
-    {
-    gradient = QLinearGradient( groove.center().x(), groove.top(),
-                                groove.center().x(), groove.bottom());
-    }
+  QRect currentSection;
+  QLinearGradient currentGradient;
+  int currentColor = 6;
+
+  if (sliderSections().isEmpty())
+  {
+      currentGradient.setColorAt(0, QColor(Qt::GlobalColor(9)).darker(120));
+      currentGradient.setColorAt(1, QColor(Qt::GlobalColor(9)).lighter(160));
+      painter.setBrush(currentGradient);
+      painter.setPen(QPen(QColor(Qt::GlobalColor(9)).lighter(150), 0));
+      painter.drawRect( rangeBox.intersected(groove) );
+  }
   else
-    {
-    gradient = QLinearGradient( groove.left(), groove.center().y(),
-                                groove.right(), groove.center().y());
-    }
+  foreach (const QString &key, sliderSections().keys())
+  {
+    currentSection=QRect(QPoint(sr.left()+sr.width()*sliderSections().value(key), sr.center().y() - 2),
+                                QPoint(sr.right()+sr.width()*sliderSections().value(key), sr.center().y() + 1));
 
-  // TODO: Set this based on the supplied transfer function
-  //QColor l = Qt::darkGray;
-  //QColor u = Qt::black;
+    currentGradient=QLinearGradient( groove.center().x(), groove.top(),
+                                     groove.center().x(), groove.bottom());
 
-  gradient.setColorAt(0, highlight.darker(120));
-  gradient.setColorAt(1, highlight.lighter(160));
+    painter.setPen(QColor(10,10,10));
+    painter.drawText(QPoint(currentSection.left()+2,currentSection.top()),key);
+    currentColor++;
+    if (currentColor>18) currentColor = 6;
+    currentGradient.setColorAt(0, QColor(Qt::GlobalColor(currentColor)).darker(300));
+    currentGradient.setColorAt(1, QColor(Qt::GlobalColor(currentColor)).darker(200));
+    painter.setPen(QPen(QColor(Qt::GlobalColor(currentColor)).darker(150), 0));
+    painter.setBrush(currentGradient);
+    painter.drawRect( currentSection.intersected(groove) );
+    currentGradient.setColorAt(0, QColor(Qt::GlobalColor(currentColor)).darker(120));
+    currentGradient.setColorAt(1, QColor(Qt::GlobalColor(currentColor)).lighter(160));
+    painter.setBrush(currentGradient);
+    painter.setPen(QPen(QColor(Qt::GlobalColor(currentColor)).lighter(150), 0));
+    painter.drawRect( currentSection.intersected(rangeBox) );
+  }
 
-  painter.setPen(QPen(highlight.darker(150), 0));
-  painter.setBrush(gradient);
-  //painter.drawRect( rangeBox.intersected(groove) );
 
   //  -----------------------------------
   // Render the sliders
@@ -855,18 +867,30 @@ void IntervalSlider::emitChanged()
 emit changed(slider->minimumValue(),slider->maximumValue());
 }
 
-bool IntervalSlider::init(QSqlQuery *query)
+bool IntervalSlider::init(QSqlQuery *query, QSqlQuery *stages)
 {
 try
   {
-  toDebug("slider init with query: "+query->lastQuery(),DT_CONTROLS);
+  toDebug("slider init with query: "+query->lastQuery()+stages->lastQuery(),DT_CONTROLS);
   if (query->first())
     {
     init_query = query;
-    slider->setRange(init_query->value(0).toDateTime().toSecsSinceEpoch(),init_query->value(1).toDateTime().toSecsSinceEpoch());
+    qint64 start,end;
+    start = init_query->value(0).toDateTime().toSecsSinceEpoch();
+    end = init_query->value(1).toDateTime().toSecsSinceEpoch();
+    slider->setRange(start,end);
     reset();
     slider->setEnabled(true);
     connect(slider,&ctkRangeSlider::valuesChanged,this,&IntervalSlider::emitChanged);
+    QMap<QString,double> tmp;
+    if(stages->first())
+      {
+      tmp.insert("",0);
+      tmp.insert(GLOBALS::STAGE_NAMES[GLOBALS::STAGE_MSGS.indexOf(stages->value(0).toString())],double(stages->value(1).toDateTime().toSecsSinceEpoch()-start)/(end-start));
+      while (stages->next())
+        tmp.insert(GLOBALS::STAGE_NAMES[GLOBALS::STAGE_MSGS.indexOf(stages->value(0).toString())],double(stages->value(1).toDateTime().toSecsSinceEpoch()-start)/(end-start));
+      }
+    slider->setSliderSections(tmp);
     return true;
     }
   return false;
@@ -893,4 +917,9 @@ setValues(init_query->value(0).toDateTime().toSecsSinceEpoch(),init_query->value
 void IntervalSlider::setValues(int min, int max)
 {
 slider->setValues(min,max);
+}
+
+void IntervalSlider::setSliderSections(QMap<QString,double> sect)
+{
+slider->setSliderSections(sect);
 }

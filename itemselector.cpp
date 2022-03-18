@@ -55,9 +55,10 @@ connect(descrSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::descrS
 connect(groupSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::groupSelectorChanged);
 connect(varSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::varSelectorChanged);
 connect(buttons,&ControlButtons::addClicked,this,&ItemSelector::addValue);
+connect(buttons,&ControlButtons::soloClicked,this,&ItemSelector::soloValue);
 current_set = {};
 addValue();
-
+buttons->setSoloButtonText(UI_GLOBALS::ALIAS_FOR_SOLO);
 }
 
 void ItemSelector::init()
@@ -70,6 +71,8 @@ varSelector->init();
 groupSelector->init();
 descrSelector->init();
 current_set = {};
+buttons->setAddButtonText(UI_GLOBALS::PLACEHOLDER);
+buttons->setSoloButtonText(UI_GLOBALS::PLACEHOLDER);
 }
 
 void ItemSelector::reset()
@@ -92,16 +95,16 @@ if (v.isEmpty())
   {
   v = "Все";
   if (current_set.isEmpty())
-    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_ADD_ALL);
+    buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_ADD_ALL);
   else
-    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE_ALL);
+    buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE_ALL);
   }
 else
   if (current_set.contains(v))
-    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE);
+    buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE);
   else
-    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_ADD);
-buttons->setLabelText(QString("Группа: %1; Переменная: %2").arg(g,v));
+    buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_ADD);
+//buttons->setLabelText(QString("Группа: %1; Переменная: %2").arg(g,v));
 emit changed();
 }
 
@@ -135,25 +138,43 @@ if (!varSelector->currentText().isEmpty())
   if (current_set.contains(varSelector->currentText()))
     {
     current_set.remove(varSelector->currentText());
-    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_ADD);
+    buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_ADD);
     }
   else
     {
     current_set.insert(varSelector->currentText());
-    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE);
+    buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE);
     }
 else
   if (current_set.isEmpty())
     {
     for (int i=0;i<model->rowCount();++i)
       current_set.insert(model->data(model->index(i,0)).toString());
-    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE_ALL);
+    buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE_ALL);
     }
   else
     {
     current_set = {};
-    buttons->setButtonText(UI_GLOBALS::ALIAS_FOR_ADD_ALL);
+    buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_ADD_ALL);
     }
+emit changed();
+}
+
+void ItemSelector::soloValue()
+{
+if (!varSelector->currentText().isEmpty())
+  {
+  current_set.clear();
+  current_set.insert(varSelector->currentText());
+  buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE);
+  }
+else
+  {
+  for (int i=0;i<model->rowCount();++i)
+    current_set.insert(model->data(model->index(i,0)).toString());
+  buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE_ALL);
+  }
+
 emit changed();
 
 }

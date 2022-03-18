@@ -15,7 +15,8 @@ public:
     virtual void reset();
     virtual void emitChanged();
     void setLabelText(const QString &text);
-    void setButtonText(const QString &text);
+    void setAddButtonText(const QString &text);
+    void setSoloButtonText(const QString &text);
     void setEnabled(const bool enabled);
 signals:
     void addClicked();

@@ -114,13 +114,17 @@ foreach (const QString item,hidden_columns)
 
 void CustomTableView::setHiddenColumns(const QStringList &list)
 {
-toDebug("setting hidden columns",DT_TABLE);
-CustomSortModel *md = dynamic_cast<CustomSortModel*>(model());
-hidden_columns.clear();
-for (int i=0; i<md->columnCount();i++)
+toDebug("setting hidden columns:",DT_TABLE);
+//CustomSortModel *md = dynamic_cast<CustomSortModel*>(model());
+//hidden_columns.clear();
+/*for (int i=0; i<md->columnCount();i++)
+{
+  toDebug(QString(i)+ md->headerData(i,Qt::Horizontal).toString(),DT_TABLE);
   if (list.contains(md->headerData(i,Qt::Horizontal).toString()))
     hidden_columns.append(md->headerData(i,Qt::Horizontal).toString());
-toDebug(hidden_columns,DT_TABLE);
+}
+*/
+hidden_columns=list;
 updateColumns();
 }
 

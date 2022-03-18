@@ -26,18 +26,15 @@ connect(messagesSelector,&CheckBoxSelector::changed,this,&MainWindow::messagesSe
 connect(ui->queryEdit,&QTextEdit::textChanged,this,&MainWindow::queryChanged);
 connect(ui->sendQuery,&QPushButton::clicked,this,&MainWindow::sendQueryClicked);
 
-toDebug("Setting SQL globals",DT_TRACE);
 db = new DataBase(this);
 createMenuBar();
 readHostsList();
 initPlot();
 initModel();
-resetInterface();
+initInterface();
 dbInfoLabel = new QLabel(statusBar());
 statusBar()->addPermanentWidget(dbInfoLabel);
-qDebug()<<QCoreApplication::applicationDirPath();
-QSettings settings(CONFIG_FILE,QSettings::IniFormat);
-if (settings.value("globals/CONNECT_ON_STARTUP",GLOBALS::CONNECT_ON_STARTUP).toBool())
+if (GLOBALS::CONNECT_ON_STARTUP)
     setDataBase(*db->getConnectParams());
 }
 
@@ -85,11 +82,13 @@ if (db->connectDataBase(params))
   intervalSelector->init(db->exec(SqlSelectQuery::buildSelectQuery({QString("MIN(%1)").arg(DATETIME_COLUMN),
                                                                  QString("MAX(%1)").arg(DATETIME_COLUMN)},
                                                                  QString("(%1) tmp").arg(SqlSelectQuery::buildUnion(SqlSelectQuery::buildSelectQuery({DATETIME_COLUMN},VALUES_TABLE),
-                                                                                                                    SqlSelectQuery::buildSelectQuery({DATETIME_COLUMN},MESSAGES_TABLE))))));
+                                                                                                                    SqlSelectQuery::buildSelectQuery({DATETIME_COLUMN},MESSAGES_TABLE))))),
+                         db->exec(SqlSelectQuery::buildSelectQuery({MESSAGE_COLUMN,DATETIME_COLUMN},MESSAGES_TABLE,{},{SqlFilter(MESSAGE_COLUMN,GLOBALS::STAGE_MSGS)})));
 
   messagesSelector->init(db->exec(SqlSelectQuery::buildSelectQuery({MESSAGE_COLUMN},MESSAGES_TABLE)));
   ui->sendQuery->setEnabled(true);
-  ui->queryEdit->setEnabled(true);
+  ui->queryEdit->setEnabled(GLOBALS::EDIT_QUERY);
+  ui->queryEdit->setVisible(GLOBALS::SHOW_QUERY);
   updateQuery();
   sendQueryClicked();
   if (GLOBALS::HIDE_COLUMNS_BY_DEFAULT)
@@ -168,10 +167,10 @@ using namespace SQL_GLOBALS;
 QCPGraph *graph;
 QSqlQuery *query = db->exec(SqlSelectQuery::buildSelectQuery(DEFAULT_PLOT_ITEMS,VALUES_TABLE,
                                                              {SqlJoin(DESCRIPTIONS_TABLE,VARID,DESCRIPTIONS_ID)},
-                                                             {SqlFilter(DATETIME,intervalSelector->getInterval())}));
+                                                             {SqlFilter(DATETIME,intervalSelector->getInterval()),SqlFilter(VARNAME,itemSelector->varSet())}));
 ui->plot->clearGraphs();
 QMap<QString,QSharedPointer<QCPGraphDataContainer>> plot_data;
-
+toDebug(query->lastQuery(),DT_PLOT);
 foreach (const QString s, itemSelector->varSet())
   {
   QSharedPointer<QCPGraphDataContainer> data(new QCPGraphDataContainer);
@@ -182,6 +181,7 @@ foreach (const QString s, itemSelector->varSet())
 while (query->next())
   {
   toDebug("Adding to container "+query->value(0).toString()+" "+query->value(1).toString()+" "+query->value(2).toString(),DT_PLOT);
+
   plot_data[query->value(1).toString()]->
             add(QCPGraphData(QDateTime::fromString(query->value(0).toString(),GLOBALS::DEFAULT_DATETIME_FORMAT).toSecsSinceEpoch(),
                              query->value(2).toDouble()));
@@ -190,6 +190,7 @@ while (query->next())
 int i=0;
 foreach (const QString s,itemSelector->varSet())
   {
+  qDebug()<<s<<plot_data[s];
   graph = ui->plot->addGraph();
   graph->setData(plot_data[s]);
   graph->setName(s);
@@ -364,7 +365,8 @@ void MainWindow::showOptionsDialog()
 {
 toDebug("showOptionsDialog()",DT_TRACE);
 OptionsWindow* dialog = new OptionsWindow(this);
-dialog->show();
+dialog->exec();
+resetInterface();
 }
 
 void MainWindow::closeDB()
@@ -376,9 +378,9 @@ dbInfoLabel->setText("");
 statusBar()->showMessage(UI_GLOBALS::STATUS_DB_CLOSED);
 }
 
-void MainWindow::resetInterface()
+void MainWindow::initInterface()
 {
-toDebug("resetInterface()",DT_TRACE);
+toDebug("initInterface()",DT_TRACE);
 itemSelector->init();
 intervalSelector->init();
 messagesSelector->init();
@@ -388,5 +390,18 @@ button_stylesheet(ui->sendQuery,UI_GLOBALS::QUERY_UNKNOWN_COLOR);
 ui->sendQuery->setEnabled(false);
 model->clear();
 ui->plot->clearGraphs();
+ui->tableView->setHiddenColumns(SQL_GLOBALS::DEFAULT_HIDDEN_COLUMNS);
+statusBar()->showMessage(UI_GLOBALS::STATUS_INTERFACE_READY);
+}
+
+void MainWindow::resetInterface()
+{
+toDebug("resetInterface()",DT_TRACE);
+itemSelector->reset();
+intervalSelector->reset();
+messagesSelector->reset();
+ui->tableView->setHiddenColumns(SQL_GLOBALS::DEFAULT_HIDDEN_COLUMNS);
+ui->queryEdit->setEnabled(GLOBALS::EDIT_QUERY);
+ui->queryEdit->setVisible(GLOBALS::SHOW_QUERY);
 statusBar()->showMessage(UI_GLOBALS::STATUS_INTERFACE_READY);
 }

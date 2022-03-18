@@ -67,6 +67,7 @@ private:
     void initModel();            //инициализация модели представления данных
     void initPlot();             //инициализация графика
     void changeLayout(); //сменить вид
+    void initInterface();
     void resetInterface();
 
 

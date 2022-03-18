@@ -13,29 +13,42 @@
   <property name="windowTitle">
    <string>Настройки</string>
   </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QTabWidget" name="tabWidgetMain">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabInterface">
       <attribute name="title">
        <string>Общие</string>
       </attribute>
-      <widget class="QCheckBox" name="checkBoxConnectOnStart">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>20</y>
-         <width>221</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Подключать БД при запуске</string>
-       </property>
-      </widget>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QCheckBox" name="checkBoxConnectOnStart">
+         <property name="text">
+          <string>Подключать БД при запуске</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkBoxShowQuery">
+         <property name="text">
+          <string>Отображать текст запроса к БД</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkBoxEditQuery">
+         <property name="text">
+          <string>Разрешить редактирование запроса</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
      <widget class="QWidget" name="tabDB">
       <attribute name="title">
@@ -45,7 +58,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidgetDB">
          <property name="currentIndex">
-          <number>2</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="tabGeneral">
           <attribute name="title">

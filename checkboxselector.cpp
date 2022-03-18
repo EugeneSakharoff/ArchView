@@ -45,7 +45,7 @@ return true;
 
 void CheckBoxSelector::init()
 {
-toDebug(label->text()+" Checkbox init(empty)",DT_TRACE);
+toDebug(label->text()+" Checkbox init(empty)",DT_CONTROLS);
 checkBox->setChecked(false);
 checkBox->setEnabled(false);
 checkBox->update();
@@ -55,7 +55,7 @@ disconnect(checkBox,&QCheckBox::clicked,this,&CheckBoxSelector::emitChanged);
 
 void CheckBoxSelector::reset()
 {
-toDebug(label->text()+" checkbox reset",DT_TRACE);
+toDebug(label->text()+" checkbox reset",DT_CONTROLS);
 checkBox->setChecked(GLOBALS::MESSAGES_ON_BY_DEFAULT);
 checkBox->update();
 }

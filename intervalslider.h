@@ -34,7 +34,7 @@ class ctkRangeSlider : public QSlider
   Q_PROPERTY(int maximumPosition READ maximumPosition WRITE setMaximumPosition)
   Q_PROPERTY(bool symmetricMoves READ symmetricMoves WRITE setSymmetricMoves)
   Q_PROPERTY(QString handleToolTip READ handleToolTip WRITE setHandleToolTip)
-
+  Q_PROPERTY(QMap<QString,double> sliderSections READ sliderSections WRITE setSliderSections)
 public:
   // Superclass typedef
   typedef QSlider Superclass;
@@ -96,6 +96,9 @@ public:
   /// Returns true if the maximum value handle is down, false if it is up.
   /// \sa isMinimumSliderDown()
   bool isMaximumSliderDown()const;
+
+  QMap<QString,double> sliderSections()const;
+  void setSliderSections(QMap<QString,double>);
 
 Q_SIGNALS:
   ///
@@ -184,6 +187,7 @@ protected:
 private:
   Q_DECLARE_PRIVATE(ctkRangeSlider);
   Q_DISABLE_COPY(ctkRangeSlider);
+
 };
 
 
@@ -194,11 +198,12 @@ class IntervalSlider : public ControlElement
 public:
     IntervalSlider(QWidget *parent,const QString labeltext);
     ~IntervalSlider();
-    virtual bool init(QSqlQuery* query);
+    virtual bool init(QSqlQuery* query, QSqlQuery *stages);
     virtual void init();
     virtual void reset();
     void setValues(int min, int max);
     virtual void emitChanged();
+    void setSliderSections(QMap<QString,double> sect);
 signals:
     void changed(int min, int max);
 private:

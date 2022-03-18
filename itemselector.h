@@ -33,6 +33,7 @@ signals:
 
 private:
     void addValue();
+    void soloValue();
     QSqlQueryModel* model;
     QSqlQuery *init_query;
     QSqlQueryModel* group_model;

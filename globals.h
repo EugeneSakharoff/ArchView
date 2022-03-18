@@ -60,9 +60,14 @@ extern QString DEFAULT_DATETIME_FORMAT;
 extern bool CONNECT_ON_STARTUP;
 extern bool MESSAGES_ON_BY_DEFAULT;
 extern bool HIDE_COLUMNS_BY_DEFAULT;
+extern bool SHOW_QUERY;
+extern bool EDIT_QUERY;
 
 extern QString ABOUT_TEXT;
 extern QMap<QString, QString> HOSTS_MAP;
+extern QMap<QString,QString> MESSAGES_TO_SLIDER_SECTIONS;
+extern QStringList STAGE_NAMES;
+extern QStringList STAGE_MSGS;
 }
 
 void readHostsList();

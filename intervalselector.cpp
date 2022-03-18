@@ -34,7 +34,7 @@ endSelector->init();
 slider->init();
 }
 
-bool IntervalSelector::init(QSqlQuery* query)
+bool IntervalSelector::init(QSqlQuery* query,QSqlQuery* stages)
 {
 if (query==nullptr)
   {
@@ -42,9 +42,10 @@ if (query==nullptr)
   return false;
   }
 init_query = query;
-if (startSelector->init(init_query)&&endSelector->init(init_query)&&slider->init(init_query))
+stages_query = stages;
+if (startSelector->init(init_query)&&endSelector->init(init_query)&&slider->init(init_query,stages_query))
   {
-  toDebug("intervalSelector init with "+init_query->lastQuery()+init_query->value(0).toString()+init_query->value(1).toString(),DT_CONTROLS);
+  toDebug("intervalSelector init with "+init_query->lastQuery()+init_query->value(0).toString()+init_query->value(1).toString()+stages->lastQuery(),DT_CONTROLS);
   reset();
   return true;
   }

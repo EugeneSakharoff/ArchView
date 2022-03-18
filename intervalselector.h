@@ -13,7 +13,7 @@ public:
     ~IntervalSelector();
     QPair<QString,QString> getInterval();
     void init();
-    bool init(QSqlQuery* query);
+    bool init(QSqlQuery* query, QSqlQuery* stages);
     void reset();
 
 public slots:
@@ -28,6 +28,7 @@ private:
     TimeSelector* endSelector;
     IntervalSlider* slider;
     QSqlQuery* init_query;
+    QSqlQuery* stages_query;
 };
 
 #endif // INTERVALSELECTOR_H

@@ -41,9 +41,15 @@ namespace GLOBALS {
  bool CONNECT_ON_STARTUP;
  bool MESSAGES_ON_BY_DEFAULT;
  bool HIDE_COLUMNS_BY_DEFAULT;
+ bool SHOW_QUERY;
+ bool EDIT_QUERY;
 
  QString ABOUT_TEXT;
  QMap<QString, QString> HOSTS_MAP;
+
+QMap<QString,QString> MESSAGES_TO_SLIDER_SECTIONS;
+QStringList STAGE_NAMES;
+QStringList STAGE_MSGS;
 /*
 const bool DEBUG_TRACE         = settings.value("debug/DEBUG_TRACE","false").toBool();
 const bool DEBUG_SQL           = settings.value("debug/DEBUG_SQL","false").toBool();
@@ -103,22 +109,22 @@ switch (type)
     if (GLOBALS::DEBUG_TRACE) qDebug()<<QString("%1").arg(msg.toString(),-70,QChar(46));
     break;
   case DT_SQL:
-    if (GLOBALS::DEBUG_SQL) qDebug()<<msg;
+    if (GLOBALS::DEBUG_SQL) qDebug()<<msg.toString();
     break;
   case DT_CONTROLS:
-    if (GLOBALS::DEBUG_CONTROLS) qDebug()<<msg;
+    if (GLOBALS::DEBUG_CONTROLS) qDebug()<<msg.toString();
     break;
   case DT_PLOT:
-    if (GLOBALS::DEBUG_PLOT) qDebug()<<msg;
+    if (GLOBALS::DEBUG_PLOT) qDebug()<<msg.toString();
     break;
   case DT_TABLE:
-    if (GLOBALS::DEBUG_TABLE) qDebug()<<msg;
+    if (GLOBALS::DEBUG_TABLE) qDebug()<<msg.toString();
     break;
   case DT_TEST_TABLES:
-    if (GLOBALS::DEBUG_TEST_TABLES) qDebug()<<msg;
+    if (GLOBALS::DEBUG_TEST_TABLES) qDebug()<<msg.toString();
     break;
   case DT_DATABASE:
-    if (GLOBALS::DEBUG_DB_CONNECTION) qDebug()<<msg;
+    if (GLOBALS::DEBUG_DB_CONNECTION) qDebug()<<msg.toString();
     break;
   qDebug()<<msg;
   }
@@ -146,6 +152,8 @@ DEBUG_DB_CONNECTION = settings.value("debug/DEBUG_DB_CONNECTION","false").toBool
 CONNECT_ON_STARTUP      = settings.value("globals/CONNECT_ON_STARTUP","false").toBool();
 MESSAGES_ON_BY_DEFAULT  = settings.value("globals/MESSAGES_ON_BY_DEFAULT","false").toBool();
 HIDE_COLUMNS_BY_DEFAULT = settings.value("globals/HIDE_COLUMNS_BY_DEFAULT","false").toBool();
+SHOW_QUERY              = settings.value("globals/SHOW_QUERY","false").toBool();
+EDIT_QUERY              = settings.value("globals/EDIT_QUERY","false").toBool();
 
 DEFAULT_DATETIME_FORMAT = settings.value("globals/DEFAULT_DATETIME_FORMAT","dd-MM-yyyy hh:mm:ss").toString();
 ABOUT_TEXT = settings.value("globals/ABOUT_TEXT","ООО 'СКУ СИСТЕМА' просмотр архива.").toString();
@@ -198,18 +206,30 @@ ALIAS_PRECISION  = settings.value("sql/ALIAS_PRECISION",   "precision").toString
 ALIAS_VALUE      = settings.value("sql/ALIAS_VALUE",       "val").toString();
 ALIAS_VALUE_RAW  = settings.value("sql/ALIAS_VALUE_RAW",   "val_raw").toString();
 
-HEADER_ID        = settings.value("sql/HEADER_ID",        "Номер").toString();
-HEADER_VARID     = settings.value("sql/HEADER_VARID",     "id переменной").toString();
-HEADER_VARNAME   = settings.value("sql/HEADER_VARNAME",   "Наименование").toString();
-HEADER_DESCR     = settings.value("sql/HEADER_DESCR",     "Описание").toString();
-HEADER_UNITS     = settings.value("sql/HEADER_UNITS",     "Единица измерения").toString();
-HEADER_GROUPNAME = settings.value("sql/HEADER_GROUPNAME", "Группа").toString();
-HEADER_DATETIME  = settings.value("sql/HEADER_DATETIME",  "Дата и время").toString();
-HEADER_DATE      = settings.value("sql/HEADER_DATE",      "Дата").toString();
-HEADER_TIME      = settings.value("sql/HEADER_TIME",      "Время").toString();
-HEADER_PRECISION = settings.value("sql/HEADER_PRECISION", "Точность").toString();
-HEADER_VALUE     = settings.value("sql/HEADER_VALUE",     "Значение").toString();
-HEADER_VALUE_RAW = settings.value("sql/HEADER_VALUE_RAW", "Точное значение").toString();
+HEADER_ID        = settings.value("interface/HEADER_ID",        "Номер").toString();
+HEADER_VARID     = settings.value("interface/HEADER_VARID",     "id переменной").toString();
+HEADER_VARNAME   = settings.value("interface/HEADER_VARNAME",   "Наименование").toString();
+HEADER_DESCR     = settings.value("interface/HEADER_DESCR",     "Описание").toString();
+HEADER_UNITS     = settings.value("interface/HEADER_UNITS",     "Единица измерения").toString();
+HEADER_GROUPNAME = settings.value("interface/HEADER_GROUPNAME", "Группа").toString();
+HEADER_DATETIME  = settings.value("interface/HEADER_DATETIME",  "Дата и время").toString();
+HEADER_DATE      = settings.value("interface/HEADER_DATE",      "Дата").toString();
+HEADER_TIME      = settings.value("interface/HEADER_TIME",      "Время").toString();
+HEADER_PRECISION = settings.value("interface/HEADER_PRECISION", "Точность").toString();
+HEADER_VALUE     = settings.value("interface/HEADER_VALUE",     "Значение").toString();
+HEADER_VALUE_RAW = settings.value("interface/HEADER_VALUE_RAW", "Точное значение").toString();
+
+QString temp = settings.value("interface/HIDDEN_COLUMNS","").toString();
+DEFAULT_HIDDEN_COLUMNS<<temp.split(" ");
+
+
+int size = settings.beginReadArray("slidersections");
+for (int i = 0; i < size; ++i) {
+    settings.setArrayIndex(i);
+    STAGE_MSGS.append(settings.value("MSG").toString());
+    STAGE_NAMES.append(settings.value("NAME").toString());
+}
+settings.endArray();
 
 //выражения на SQL, получающие определенный столбец определенной таблицы
 VALUES_ID             = VALUES_TABLE+QString(".")+ID_COLUMN;
@@ -256,6 +276,8 @@ HEADERS_MAP = {{ALIAS_ID,        HEADER_ID},
                {ALIAS_VALUE,     HEADER_VALUE},
                {ALIAS_VALUE_RAW, HEADER_VALUE_RAW}};
 
+for (int i=0;i<DEFAULT_HIDDEN_COLUMNS.count();++i)
+    DEFAULT_HIDDEN_COLUMNS[i] = HEADERS_MAP.value(DEFAULT_HIDDEN_COLUMNS[i]);
 
 VALS_MSGS_UNION_MAP = {{SEL_ID,               QString("null AS ")+ALIAS_ID},
                        {SEL_VARID,            QString("null AS ")+ALIAS_VARID},
@@ -277,14 +299,7 @@ EMPTY_JOIN = {nullptr,{nullptr,nullptr}};
 DEFAULT_VALS_ITEMS = QStringList({SEL_DATETIME,SEL_DATE,SEL_TIME,SEL_VARNAME,SEL_VALUE_WITH_UNIT,SEL_VARDESCR,SEL_GROUPNAME,SEL_PRECISION,SEL_UNITS});
 DEFAULT_ALIASES = QStringList({ALIAS_DATETIME,ALIAS_DATE,ALIAS_TIME,ALIAS_VARNAME,ALIAS_VALUE,ALIAS_DESCR,ALIAS_GROUPNAME,ALIAS_PRECISION,ALIAS_UNITS});
 
-DEFAULT_HIDDEN_COLUMNS = QStringList({HEADERS_MAP.value(ALIAS_VARID),
-                                                        HEADERS_MAP.value(ALIAS_DATETIME),
-                                                        HEADERS_MAP.value(ALIAS_VALUE_RAW),
-                                                        HEADERS_MAP.value(ALIAS_DESCR),
-                                                        HEADERS_MAP.value(ALIAS_GROUPNAME),
-                                                        HEADERS_MAP.value(ALIAS_ID),
-                                                        HEADERS_MAP.value(ALIAS_PRECISION),
-                                                        HEADERS_MAP.value(ALIAS_UNITS)});
+
 
 DEFAULT_PLOT_ITEMS = QStringList({SEL_DATETIME,SEL_VARNAME,SEL_VALUE_RAW});
 toDebug("End reading config file", DT_TRACE);
