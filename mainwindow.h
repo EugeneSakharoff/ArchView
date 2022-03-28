@@ -24,13 +24,16 @@
 typedef QPair<QVector<double>,QVector<double>> PlotValues;
 typedef QPair<QPair<double,double>,PlotValues> PlotData;
 
+/////////////////////////////////////////////////////////////////////////////
+// class MainWindow
+/////////////////////////////////////////////////////////////////////////////
+
 class MainWindow: public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *parent = 0);
+	explicit MainWindow(QWidget* parent = 0);
     ~MainWindow();
-    void afterInit();
 
 private slots:
     void resetQuery();
@@ -44,20 +47,20 @@ private slots:
     void showOpenDBDialog();
     void showOptionsDialog();
     void closeDB();
-
+	void afterInit();
 
 private:
-    Ui::MainWindow *ui;         //Интерфейс
-    CustomQueryModel *model;      //модель представления данных
-    CustomDelegate *delegate;
-    DataBase *db;               //соединение с БД
-    CustomSortModel *proxy;//класс для сортировки столбцов
+	Ui::MainWindow* ui;         //Интерфейс
+	CustomQueryModel* model;      //модель представления данных
+	CustomDelegate* delegate;
+	DataBase* db;               //соединение с БД
+	CustomSortModel* proxy;//класс для сортировки столбцов
 
-    ItemSelector *itemSelector;
-    CheckBoxSelector *messagesSelector;
-    IntervalSelector *intervalSelector;
+	ItemSelector* itemSelector;
+	CheckBoxSelector* messagesSelector;
+	IntervalSelector* intervalSelector;
 
-    QLabel *dbInfoLabel;
+	QLabel* dbInfoLabel;
 
     bool currentLayout;
 

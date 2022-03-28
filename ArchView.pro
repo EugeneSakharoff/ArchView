@@ -68,3 +68,8 @@ FORMS += \
     mainwindow.ui \
     opendbdialog.ui \
     optionswindow.ui
+
+RC_FILE = qarchview.rc
+
+RESOURCES += \
+    qarchview.qrc
