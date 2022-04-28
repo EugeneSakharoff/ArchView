@@ -2,8 +2,10 @@
 #include <QStringBuilder>
 
 namespace SQL_GLOBALS {
+//глобальные параметры, связанные с sql запросами
 
-QString VALUES_TABLE;
+//имена таблиц
+ QString VALUES_TABLE;
  QString DESCRIPTIONS_TABLE;
  QString MESSAGES_TABLE;
  QString GROUPS_TABLE;
@@ -34,6 +36,7 @@ QString VALUES_TABLE;
  QString ALIAS_VALUE;
  QString ALIAS_VALUE_RAW;
 
+//русскиоязычные имена для заголовков таблицы
  QString HEADER_ID;
  QString HEADER_VARID;
  QString HEADER_VARNAME;
@@ -217,6 +220,7 @@ const QStringList DEFAULT_PLOT_ITEMS = QStringList({SEL_DATETIME,SEL_VARNAME,SEL
 */
 }
 
+//вспомогательная функция нужна, чтобы корректно составлялся запрос типа SELECT...FROM vals UNION messges
 QStringList buildMessageItems(QStringList valsItems)
 {
 QStringList messageItems;
@@ -224,6 +228,7 @@ foreach (const QString item, valsItems) messageItems.append(SQL_GLOBALS::VALS_MS
 return messageItems;
 }
 
+//получить SQL псевдоним из русскоязычного имени столбца
 QString getAliasFromHeader(QString header)
 {
 return SQL_GLOBALS::HEADERS_MAP.key(header);

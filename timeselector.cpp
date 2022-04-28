@@ -1,5 +1,7 @@
 #include "timeselector.h"
 
+//--------------------------------------------------------------------------------------
+//Модифицированный QDateTimeEdit в котором прогрессивный шаг увеличения значения, если зажать соответствующую кнопку
 TimeEdit::TimeEdit(QWidget *parent):QDateTimeEdit(parent)
 {
 
@@ -33,7 +35,8 @@ void TimeEdit::timerEvent(QTimerEvent *event)
       }
 }
 
-
+//--------------------------------------------------------------------------------------
+//Наследует ControlElement, содержит TimeEdit, содержится в IntervalSelector-е
 TimeSelector::TimeSelector(QWidget *parent,const QString &labeltext):ControlElement(parent,labeltext)
 {
 timeEdit = new TimeEdit(groupBox);
@@ -63,13 +66,12 @@ void TimeSelector::setTime(const QDateTime &time)
 timeEdit->setDateTime(time);
 }
 
-void TimeSelector::init()
+void TimeSelector::clear()
 {
-toDebug("timeselector default init",DT_CONTROLS);
+toDebug("timeselector clear",DT_CONTROLS);
 timeEdit->setDateTime(QDateTime::currentDateTime());
 //timeEdit->setDateTimeRange(QDateTime::fromSecsSinceEpoch(0),QDateTime::currentDateTime());
 timeEdit->setEnabled(false);
-disconnect(timeEdit,&QTimeEdit::editingFinished,this,&TimeSelector::emitChanged);
 }
 
 bool TimeSelector::init(QSqlQuery* query)
@@ -77,23 +79,22 @@ bool TimeSelector::init(QSqlQuery* query)
 QDateTime min,max;
 try
   {
-  toDebug("timeselector init with query: "+query->lastQuery(),DT_CONTROLS);
+  toDebug(this->label->text()+"timeselector init with query: "+query->lastQuery(),DT_CONTROLS);
   if (query->first())
     {
     min = query->value(0).toDateTime();
-    max = query->value(1).toDateTime();
+    max = query->value(1).toDateTime().addSecs(1);
     }
-  //timeEdit->setDateTimeRange(min,max);
-  timeEdit->setDateTime(max);
+  timeEdit->setDateTimeRange(min,max);
   timeEdit->setEnabled(true);
   timeEdit->setCurrentSectionIndex(5);
-  connect(timeEdit,&QTimeEdit::editingFinished,this,&TimeSelector::emitChanged);
+  connect(timeEdit,&QTimeEdit::editingFinished,this,[=](){emit changed();});
   return true;
   }
 catch (...)
   {
   toDebug("TimeSelector initialization failed!",DT_ERROR);
-  init();
+  clear();
   return false;
   }
 }
@@ -106,9 +107,14 @@ emit changed();
 }
 
 
-void TimeSelector::emitChanged()
+void TimeSelector::update()
 {
-emit changed();
+
+}
+
+bool TimeSelector::init()
+{
+return 1;
 }
 
 

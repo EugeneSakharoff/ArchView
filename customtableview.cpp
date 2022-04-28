@@ -1,6 +1,6 @@
 #include "customtableview.h"
 
-
+//Класс для отображения таблицы, добавлены сигналы\слоты для обработки событий мыши
 CustomTableView::CustomTableView(QWidget *parent):
     QTableView(parent)
 {

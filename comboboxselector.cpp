@@ -1,82 +1,67 @@
 #include "comboboxselector.h"
 
+
+//Класс наследуется от ControlElement, содержит в себе комбобокс и кнопку reset
+//Входит в состав ItemSelector
 ComboBoxSelector::ComboBoxSelector(QWidget *parent, const QString& labeltext, bool withButtons):ControlElement(parent,labeltext)
 {
 comboBox = new QComboBox(groupBox);
-//addButton = new QPushButton(groupBox);
-//soloButton = new QPushButton(groupBox);
 resetButton = new QPushButton(groupBox);
 layout->addWidget(comboBox);
 if (withButtons)
   {
-  //addButton->setMaximumSize(UI_GLOBALS::BUTTON_WIDTH,UI_GLOBALS::ELEMENT_HEIGHT);
-  //addButton->setMinimumSize(UI_GLOBALS::BUTTON_WIDTH,UI_GLOBALS::ELEMENT_HEIGHT);
-
-  //soloButton->setMaximumSize(UI_GLOBALS::BUTTON_WIDTH,UI_GLOBALS::ELEMENT_HEIGHT);
-  //soloButton->setMinimumSize(UI_GLOBALS::BUTTON_WIDTH,UI_GLOBALS::ELEMENT_HEIGHT);
-
   resetButton->setMaximumSize(UI_GLOBALS::BUTTON_WIDTH,UI_GLOBALS::ELEMENT_HEIGHT);
   resetButton->setMinimumSize(UI_GLOBALS::BUTTON_WIDTH,UI_GLOBALS::ELEMENT_HEIGHT);
-
   resetButton->setText(UI_GLOBALS::ALIAS_FOR_RESET);
 
-  //connect(addButton,&QPushButton::clicked,this,[=](){emit addClicked();});
-  //connect(soloButton,&QPushButton::clicked,this,[=](){emit soloClicked();});
   connect(resetButton,&QPushButton::clicked,this,&ComboBoxSelector::reset);
   }
 else
   {
-  //addButton->setMaximumSize(0,0);
-  //addButton->setMinimumSize(0,0);
-  //addButton->setVisible(false);
-
-  //soloButton->setMaximumSize(0,0);
-  //soloButton->setMinimumSize(0,0);
-  //soloButton->setVisible(false);
-
   resetButton->setMaximumSize(0,0);
   resetButton->setMinimumSize(0,0);
   resetButton->setVisible(false);
   }
-//layout->addWidget(addButton);
-//layout->addWidget(soloButton);
 layout->addWidget(resetButton);
 }
 
 ComboBoxSelector::~ComboBoxSelector()
 {
 delete resetButton;
-//delete addButton;
-//delete soloButton;
 delete comboBox;
 }
 
+//возвращает текущий индекс комбобокса
 int ComboBoxSelector::currentIndex()
 {
 return comboBox->currentIndex();
 }
 
-void ComboBoxSelector::init()
+//возвращает текущий текст комбобокса
+QString ComboBoxSelector::currentText()
+{
+return comboBox->currentText();
+}
+
+//инициализация без запроса
+void ComboBoxSelector::clear()
 {
 toDebug(label->text()+" combobox init (empty)",DT_CONTROLS);
 comboBox->clear();
 comboBox->setEnabled(false);
 comboBox->setEditable(false);
-//addButton->setEnabled(false);
-//soloButton->setEnabled(false);
 resetButton->setEnabled(false);
-//current_set = {};
-//addButton->setText(UI_GLOBALS::PLACEHOLDER);
-//soloButton->setText(UI_GLOBALS::PLACEHOLDER);
-
 }
 
-bool ComboBoxSelector::init(QSqlQuery* query)
+bool ComboBoxSelector::init()
 {
-init();
-return true;
+clear();
+return 0;
 }
 
+//инициализация через QSqlQueryModel и QDataWidgetMapper
+//model_col - столбец модели, в котором содержатся множество значений для комбобокса
+//mapper_sec и propertyName нужны для взаимодействия нескольких ComboBoxSelector-ов внутри ItemSelector-а
 bool ComboBoxSelector::init(QSqlQueryModel* model, const int model_col, QDataWidgetMapper* mapper, const int mapper_sec, const QByteArray &propertyName)
 {
 toDebug(label->text()+" combobox init ",DT_CONTROLS);
@@ -93,13 +78,8 @@ try
   comboBox->setModelColumn(model_col);
   comboBox->setEnabled(true);
   comboBox->setEditable(true);
-  //addButton->setEnabled(true);
-
-  //soloButton->setEnabled(true);
-
   resetButton->setEnabled(true);
   connect(comboBox,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[=](){emit indexChanged();});
-  //current_set = {};
   reset();
 
   toDebug(label->text()+" combobox initialization OK",DT_CONTROLS);
@@ -114,24 +94,15 @@ catch (...)
 
 }
 
-
-void ComboBoxSelector::emitChanged()
-{
-
-}
-
 void ComboBoxSelector::reset()
 {
 toDebug(label->text()+" combobox reset",DT_CONTROLS);
 comboBox->setCurrentIndex(-1);
-//for (int i=0;i<comboBox->count();++i)
-//  current_set.insert(comboBox->itemText(i));
-//addButton->setText(UI_GLOBALS::ALIAS_FOR_REMOVE);
-//soloButton->setText(UI_GLOBALS::ALIAS_FOR_SOLO);
 }
 
-QString ComboBoxSelector::currentText()
+void ComboBoxSelector::update()
 {
-return comboBox->currentText();
+
 }
+
 

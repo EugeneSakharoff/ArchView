@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include <QCoreApplication>
+#include <QTimer>
 
 /////////////////////////////////////////////////////////////////////////////
 // class MainWindow
@@ -29,14 +30,16 @@ connect( ui->sendQuery, &QPushButton::clicked, this, &MainWindow::sendQueryClick
 
 db = new DataBase( this );
 createMenuBar();
-readHostsList();
+readConnectionPresets();
 initPlot();
 initModel();
 initInterface();
 dbInfoLabel = new QLabel( statusBar() );
 statusBar()->addPermanentWidget( dbInfoLabel );
+
 if ( GLOBALS::CONNECT_ON_STARTUP )
-  setDataBase(* db->getConnectParams() );
+  setDataBase(GLOBALS::CONNECTION_PRESETS[GLOBALS::DEFAULT_PRESET],GLOBALS::SERVICE_CONNECTION);
+
 }
 
 //--------------------------------------------------------
@@ -63,14 +66,22 @@ ui->controls_query_splitter->setSizes( UI_GLOBALS::CONTROLS_QUERY_SPLITTER_SIZES
 //ИНИЦИАЛИЗАЦИЯ ИНТЕРФЕЙСА
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//--------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //инициализация БД
-void MainWindow::setDataBase( const DBConnectParams &params )
+void MainWindow::setDataBase(const CONNECTION_PARAMS &params,const CONNECTION_PARAMS &service )
 {
 toDebug( "setDataBase()", DT_TRACE );
-if ( db->connectDataBase( params ) )
+
+if (db->connectParams != nullptr)
+    delete db->connectParams;
+if (db->serviceParams != nullptr)
+    delete db->serviceParams;
+
+db->connectParams=new DBConnectParams(params);
+db->serviceParams = new DBConnectParams(service);
+if ( db->connectDataBase() )
   {
-    dbInfoLabel->setText( UI_GLOBALS::STATUS_CURRENT_DB.arg( params.getDBName(), params.getHostName() ) );
+    dbInfoLabel->setText( UI_GLOBALS::STATUS_CURRENT_DB.arg( params.dbName, params.hostName ) );
 
     //создать и заполнить тестовые таблицы
     if ( test_tables_structure::create_test_tables_flag )
@@ -80,21 +91,9 @@ if ( db->connectDataBase( params ) )
       }
 
     using namespace SQL_GLOBALS;
-    itemSelector->init(
-        db->exec( SqlSelectQuery::buildSelectQuery( { NAME_COLUMN, GROUPID_COLUMN, DESCRIPTION_COLUMN },
-                                                    DESCRIPTIONS_TABLE, {}, {}, false, NAME_COLUMN ) ),
-        db->exec( SqlSelectQuery::buildSelectQuery( { NAME_COLUMN }, GROUPS_TABLE, {}, {}, true, NAME_COLUMN ) ) );
-    intervalSelector->init(
-        db->exec( SqlSelectQuery::buildSelectQuery(
-            { QString( "MIN(%1)" ).arg( DATETIME_COLUMN ), QString( "MAX(%1)" ).arg( DATETIME_COLUMN ) },
-            QString( "(%1) tmp" )
-                .arg( SqlSelectQuery::buildUnion(
-                    SqlSelectQuery::buildSelectQuery( { DATETIME_COLUMN }, VALUES_TABLE ),
-                    SqlSelectQuery::buildSelectQuery( { DATETIME_COLUMN }, MESSAGES_TABLE ) ) ) ) ),
-        db->exec( SqlSelectQuery::buildSelectQuery( { MESSAGE_COLUMN, DATETIME_COLUMN }, MESSAGES_TABLE, {},
-                                                    { SqlFilter( MESSAGE_COLUMN, GLOBALS::STAGE_MSGS ) } ) ) );
-
-    messagesSelector->init( db->exec( SqlSelectQuery::buildSelectQuery( { MESSAGE_COLUMN }, MESSAGES_TABLE ) ) );
+    itemSelector->init(db->getDbPointer());
+    intervalSelector->init(db->getDbPointer());
+    messagesSelector->init();
     ui->sendQuery->setEnabled( true );
     ui->queryEdit->setEnabled( GLOBALS::EDIT_QUERY );
     ui->queryEdit->setVisible( GLOBALS::SHOW_QUERY );
@@ -109,9 +108,11 @@ else
     QMessageBox::warning( this, UI_GLOBALS::ERROR_TITLE, UI_GLOBALS::ERROR_OPENING_DB );
     statusBar()->showMessage( UI_GLOBALS::STATUS_INTERFACE_READY );
   }
+if (GLOBALS::AUTO_UPDATE)
+    timer_num = startTimer(GLOBALS::AUTO_UPDATE_TIMER_INTERVAL);
 }
 
-//--------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //инициализация модели представления данных
 void MainWindow::initModel()
 {
@@ -140,7 +141,7 @@ ui->plot->setInteraction( QCP::iRangeZoom, true );
 ui->plot->axisRect()->setRangeZoomAxes( ui->plot->xAxis, nullptr );
 }
 
-//--------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //создание главного меню окна
 void MainWindow::createMenuBar()
 {
@@ -171,7 +172,7 @@ connect( aboutAction, &QAction::triggered, this,
           [=]() { QMessageBox::about( this, "О программе", GLOBALS::ABOUT_TEXT ); } );
 }
 
-//--------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //построение графика
 void MainWindow::updatePlot()
 {
@@ -204,7 +205,6 @@ while ( query->next() )
 int i = 0;
 foreach ( const QString s, itemSelector->varSet() )
   {
-    qDebug() << s << plot_data[s];
     graph = ui->plot->addGraph();
     graph->setData( plot_data[s] );
     graph->setName( s );
@@ -215,7 +215,7 @@ ui->plot->rescaleAxes();
 ui->plot->replot();
 delete query;
 }
-
+//----------------------------------------------------------------------------------------
 //обновление текста запроса в текстовом поле
 void MainWindow::updateQuery()
 {
@@ -276,6 +276,7 @@ updateQuery();
 }
 
 //--------------------------------------------------------
+//слот, обновляющий запрос к БД при изменении чекбокса "Сообщения"
 void MainWindow::messagesSelectorChanged()
 {
 toDebug( "messsageSelectorChanged()", DT_TRACE );
@@ -283,6 +284,7 @@ updateQuery();
 }
 
 //--------------------------------------------------------
+//Слот, срабатывающий когда текст запроса изменился
 void MainWindow::queryChanged()
 {
 toDebug( "queryChanged()", DT_TRACE );
@@ -341,6 +343,7 @@ ui->centralwidget->update();
 }
 
 //--------------------------------------------------------
+//Сбрасывает запрос на запрос по-умолчанию
 void MainWindow::resetQuery()
 {
 toDebug( "resetQuery()", DT_TRACE );
@@ -364,21 +367,23 @@ void MainWindow::optionsRejected()
 }
 
 //--------------------------------------------------------
+//Открыть окно "Открытие архива"
 void MainWindow::showOpenDBDialog()
 {
 toDebug( "showOpenDBDialog()", DT_TRACE );
-OpenDBDialog* dialog = new OpenDBDialog(* db->getConnectParams(), this );
-DBConnectParams* params = dialog->getDBParams();
-if ( params != nullptr )
+OpenDBDialog* dialog = new OpenDBDialog( db->connectParams, this );
+CONNECTION_PARAMS *params = dialog->getDBParams();
+if (params!=nullptr)
   {
-    if ( db->isConnected() )
-      closeDB();
-	setDataBase(* params );
+  if ( db->isConnected() )
+    closeDB();
+  setDataBase(*params, GLOBALS::SERVICE_CONNECTION );
   }
 delete dialog;
 }
 
 //--------------------------------------------------------
+//Открыть окно настроек
 void MainWindow::showOptionsDialog()
 {
 toDebug( "showOptionsDialog()", DT_TRACE );
@@ -388,22 +393,25 @@ resetInterface();
 }
 
 //--------------------------------------------------------
+//При закрытии БД
 void MainWindow::closeDB()
 {
 toDebug( "closeDB()", DT_TRACE );
-resetInterface();
+initInterface();
 db->close();
 dbInfoLabel->setText( "" );
 statusBar()->showMessage( UI_GLOBALS::STATUS_DB_CLOSED );
+killTimer(timer_num);
 }
 
 //--------------------------------------------------------
+//Очистка и пре-инициализация интерфейса (пустая, без подключения к БД)
 void MainWindow::initInterface()
 {
 toDebug( "initInterface()", DT_TRACE );
-itemSelector->init();
-intervalSelector->init();
-messagesSelector->init();
+itemSelector->clear();
+intervalSelector->clear();
+messagesSelector->clear();
 ui->queryEdit->setPlainText( "" );
 ui->queryEdit->setEnabled( false );
 button_stylesheet( ui->sendQuery, UI_GLOBALS::QUERY_UNKNOWN_COLOR );
@@ -415,6 +423,7 @@ statusBar()->showMessage( UI_GLOBALS::STATUS_INTERFACE_READY );
 }
 
 //--------------------------------------------------------
+//Сбрасывает все управляющие элементы на значение по-умолчанию
 void MainWindow::resetInterface()
 {
 toDebug( "resetInterface()", DT_TRACE );
@@ -425,4 +434,11 @@ ui->tableView->setHiddenColumns( SQL_GLOBALS::DEFAULT_HIDDEN_COLUMNS );
 ui->queryEdit->setEnabled( GLOBALS::EDIT_QUERY );
 ui->queryEdit->setVisible( GLOBALS::SHOW_QUERY );
 statusBar()->showMessage( UI_GLOBALS::STATUS_INTERFACE_READY );
+}
+
+void MainWindow::timerEvent(QTimerEvent *event)
+{
+    ui->tableView->update();
+    itemSelector->update();
+    intervalSelector->update();
 }

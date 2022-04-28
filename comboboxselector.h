@@ -9,26 +9,24 @@
 #include <QSqlQueryModel>
 #include <QDataWidgetMapper>
 
-
-
+//Класс наследуется от ControlElement, содержит в себе комбобокс и кнопку reset
+//Входит в состав ItemSelector
 class ComboBoxSelector : public ControlElement
 {
     Q_OBJECT
 public:
     ComboBoxSelector(QWidget *parent, const QString& labeltext,bool withButtons);
     ~ComboBoxSelector();
-    virtual bool init(QSqlQuery* query);
     bool init(QSqlQueryModel* model, const int model_col=0, QDataWidgetMapper* mapper=nullptr, const int mapper_sec=0, const QByteArray &propertyName="");
-    virtual void init();
-    virtual void reset();
-    virtual void emitChanged();
+    bool init();
+    void clear();
+    void reset();
     int currentIndex();
     QString currentText();
     QSet<QString> currentSet();
+    virtual void update();
 
 signals:
-    void addClicked();
-    void soloClicked();
     void resetClicked();
     void indexChanged();
 

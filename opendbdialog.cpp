@@ -1,69 +1,79 @@
+
 #include "opendbdialog.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // class OpenDBDialog
+//Окно диалога открытия БД
 /////////////////////////////////////////////////////////////////////////////
 
-OpenDBDialog::OpenDBDialog( const DBConnectParams &params, QWidget *parent )
+OpenDBDialog::OpenDBDialog( const DBConnectParams *current_params, QWidget *parent )
     : QDialog( parent ), ui( new Ui::OpenDBDialog )
 {
+
   ui->setupUi( this );
   setWindowFlags( windowFlags() & ~Qt::WindowContextHelpButtonHint );
-  connect( ui->buttonBox, &QDialogButtonBox::accepted, this, &OpenDBDialog::checkOptions );
+  connect( ui->groupBoxAdvanced, &QGroupBox::clicked, this, &OpenDBDialog::resizeAdvancedGroupBox);
+  connect(ui->buttonBox,&QDialogButtonBox::accepted,this,&OpenDBDialog::tryAccept);
+
   disconnect( ui->buttonBox, SIGNAL( accepted() ), this, SLOT( accept() ) );
 
-  QRegExp rx( QString( "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)(\\.(?!$)|$)){4}$" ) );
-  QValidator *IPValidator = new QRegExpValidator( rx, this );
+  ui->groupBoxAdvanced->setEnabled(GLOBALS::ALLOW_ADVANCED_DB_SETTINGS);
+  ui->groupBoxAdvanced->setVisible(GLOBALS::ALLOW_ADVANCED_DB_SETTINGS);
+  ui->editPassword->setEchoMode(QLineEdit::Password);
+  QRegExp ipRegExp( QString( "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)(\\.(?!$)|$)){4}$" ) );//для IPадреса
+  QValidator *IPValidator = new QRegExpValidator( ipRegExp, this );
   ui->editIP->setValidator( IPValidator );
-
   QIntValidator *portValidator = new QIntValidator( this );
   ui->editPort->setValidator( portValidator );
 
-  readHostsList();
   //составляем список хостов из HOSTS_MAP
-  QMap<QString, QString>::iterator it;
-  for ( it = GLOBALS::HOSTS_MAP.begin(); it != GLOBALS::HOSTS_MAP.end(); ++it )
-    ui->editHost->addItem( it.key() );
-
-  //выставляем индекс на текущий хост
-  int index = ui->editHost->findText( params.getHostName() );
-  if ( index >= 0 )
-    {
-      ui->editHost->setCurrentIndex( index );
-      if ( params.getHostAddr() != GLOBALS::HOSTS_MAP[params.getHostName()] )
-        toDebug( "Current host addres does not match: " + params.getHostName() + params.getHostAddr(), DT_WARNING );
-    }
-  else
-    {
-      toDebug( "Current host name not on the list: " + params.getHostName(), DT_WARNING );
-      ui->editHost->addItem( params.getHostName() );
-      ui->editHost->setCurrentIndex( ui->editHost->count() - 1 );
-    }
-  ui->editIP->setText( params.getHostAddr() );
-
-  connect( ui->editHost, &QComboBox::currentTextChanged, this, &OpenDBDialog::editHostChanged );
-
-  ui->editName->setText( params.getDBName() );
-  ui->editUser->setText( params.getUserName() );
-  ui->editPassword->setText( params.getPassword() );
-  ui->editPort->setText( params.getPort() );
-
-  //составляем список драйверов и ищем в нем текущий
+  ui->editPreset->addItems(GLOBALS::CONNECTION_PRESETS.keys());
   ui->editDriver->addItems( GLOBALS::AVAILABLE_DRIVERS );
-  index = ui->editDriver->findText( params.getDriver() );
+  if (ui->editDriver->findText( GLOBALS::DEFAULT_DB_DRIVER )<0)
+      ui->editDriver->addItem(GLOBALS::DEFAULT_DB_DRIVER);
+
+  CONNECTION_PARAMS params;
+  if (current_params)
+      params = *current_params->getParams();
+  else
+      params = GLOBALS::CONNECTION_PRESETS[GLOBALS::DEFAULT_PRESET];
+
+  qDebug()<<params.dbName<<params.hostName<<params.hostAddress<<params.dbUser<<params.dbPassword<<params.dbPort<<params.driver;
+
+  ui->editHost->setText( params.hostName );
+  ui->editIP->setText( params.hostAddress );
+  ui->editName->setText( params.dbName );
+  ui->editUser->setText( params.dbUser );
+  ui->editPassword->setText( params.dbPassword );
+  ui->editPort->setText( params.dbPort);
+  int index = ui->editDriver->findText( params.driver);
   if ( index >= 0 )
     ui->editDriver->setCurrentIndex( index );
   else
     {
-      toDebug( "Current driver not on the list: " + params.getDriver(), DT_ERROR );
-      ui->editDriver->addItem( params.getDriver() );
-      ui->editDriver->setCurrentIndex( ui->editDriver->count() - 1 );
+    toDebug( "Current driver not on the list: " + params.driver, DT_ERROR );
+    ui->editDriver->setCurrentIndex(ui->editDriver->findText( GLOBALS::DEFAULT_DB_DRIVER ));
     }
+  connect( ui->editPreset, &QComboBox::currentTextChanged, this, &OpenDBDialog::editPresetChanged );
+  resizeAdvancedGroupBox();
 }
 
-void OpenDBDialog::editHostChanged()
+void OpenDBDialog::editPresetChanged()
 {
-  ui->editIP->setText( GLOBALS::HOSTS_MAP[ui->editHost->currentText()] );
+  ui->editHost->setText( GLOBALS::CONNECTION_PRESETS[ui->editPreset->currentText()].hostName );
+  ui->editIP->setText( GLOBALS::CONNECTION_PRESETS[ui->editPreset->currentText()].hostAddress );
+  ui->editName->setText( GLOBALS::CONNECTION_PRESETS[ui->editPreset->currentText()].dbName );
+  ui->editUser->setText( GLOBALS::CONNECTION_PRESETS[ui->editPreset->currentText()].dbUser );
+  ui->editPassword->setText( GLOBALS::CONNECTION_PRESETS[ui->editPreset->currentText()].dbPassword );
+  ui->editPort->setText( GLOBALS::CONNECTION_PRESETS[ui->editPreset->currentText()].dbPort );
+  int index = ui->editDriver->findText( GLOBALS::CONNECTION_PRESETS[ui->editPreset->currentText()].driver );
+  if ( index >= 0 )
+    ui->editDriver->setCurrentIndex( index );
+  else
+    {
+      toDebug( "Driver not on the list: " + GLOBALS::CONNECTION_PRESETS[ui->editPreset->currentText()].driver, DT_WARNING );
+      ui->editDriver->setCurrentIndex(ui->editDriver->findText( GLOBALS::DEFAULT_DB_DRIVER ));
+    }
 }
 
 OpenDBDialog::~OpenDBDialog()
@@ -71,55 +81,89 @@ OpenDBDialog::~OpenDBDialog()
   delete ui;
 }
 
-DBConnectParams *OpenDBDialog::getDBParams()
+//возвращает параметры соединения, которые выбрал пользователь
+CONNECTION_PARAMS* OpenDBDialog::getDBParams()
 {
   if ( this->exec() == 1 )
     {
-      DBConnectParams *params = new DBConnectParams( ui->editName->text(), ui->editHost->currentText(),
-                                                     ui->editIP->text(), ui->editUser->text(), ui->editPassword->text(),
-                                                     ui->editPort->text(), ui->editDriver->currentText() );
-      toDebug( "Setting DB params: " + params->getHostName() + params->getHostAddr(), DT_DATABASE );
+      CONNECTION_PARAMS *params =  new CONNECTION_PARAMS();
+      check();
+
+      params->hostName = ui->editHost->text();
+      params->hostAddress = ui->editIP->text();
+      params->dbName = ui->editName->text();
+      params->dbUser = ui->editUser->text();
+      params->dbPassword = ui->editPassword->text();
+      params->dbPort = ui->editPort->text();
+      params->driver = ui->editDriver->currentText();
       return params;
     }
   return nullptr;
 }
 
-void OpenDBDialog::checkOptions()
+//проверка заданных польхователем параметров
+bool OpenDBDialog::check()
 {
   if ( ui->editName->text().isEmpty() )
     {
       QMessageBox::warning( this, "Ошибка", "Не задано имя архива!" );
-      return;
+      return false;
     }
-  if ( ui->editHost->currentText().isEmpty() )
+  if ( ui->editHost->text().isEmpty() )
     {
       QMessageBox::warning( this, "Ошибка", "Не задано имя хоста!" );
-      return;
+      return false;
     }
   if ( ui->editIP->text().isEmpty() )
-    {
+    { 
       QMessageBox::warning( this, "Ошибка", "Не задан IP-адрес!" );
-      return;
+      return false;
     }
   if ( ui->editUser->text().isEmpty() )
     {
       QMessageBox::warning( this, "Ошибка", "Не задано имя пользователя!" );
-      return;
+      return false;
     }
   if ( ui->editPassword->text().isEmpty() )
     {
       QMessageBox::warning( this, "Ошибка", "Не задан пароль!" );
-      return;
+      return false;
     }
   if ( ui->editPort->text().isEmpty() )
     {
       QMessageBox::warning( this, "Ошибка", "Не задан порт!" );
-      return;
+      return false;
     }
   if ( ui->editDriver->currentText().isEmpty() )
     {
       QMessageBox::warning( this, "Ошибка", "Не задан драйвер!" );
-      return;
+      return false;
     }
-  accept();
+return true;
+}
+
+void OpenDBDialog::tryAccept()
+{
+if(check())
+    accept();
+}
+
+//Правильная отрисовка, когда подробные настройки подключения скрыты
+void OpenDBDialog::resizeAdvancedGroupBox()
+{
+    if (!ui->groupBoxAdvanced->isChecked())
+    {
+        ui->groupBoxAdvanced->setFlat(true);
+        ui->groupBoxAdvanced->setMaximumHeight(UI_GLOBALS::ELEMENT_HEIGHT);
+        ui->groupBoxAdvanced->setMinimumHeight(UI_GLOBALS::ELEMENT_HEIGHT);
+        setFixedHeight(ui->groupBoxSimple->height()+ui->buttonBox->height()+layout()->spacing()*2+UI_GLOBALS::ELEMENT_HEIGHT+layout()->margin()*2);
+    }
+    else
+    {
+        ui->groupBoxAdvanced->setFlat(false);
+        int height = UI_GLOBALS::ELEMENT_HEIGHT*6+ui->groupBoxAdvanced->layout()->spacing()*5+ui->groupBoxAdvanced->layout()->margin()*2;
+        ui->groupBoxAdvanced->setMaximumHeight(height);
+        ui->groupBoxAdvanced->setMinimumHeight(height);
+        setFixedHeight(ui->groupBoxSimple->height()+ui->buttonBox->height()+layout()->spacing()*2+height+layout()->margin()*2);
+    }
 }

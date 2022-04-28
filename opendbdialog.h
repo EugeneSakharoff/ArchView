@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "sql_globals.h"
 #include "ui_opendbdialog.h"
+#include "ui.h"
 #include "database.h"
 
 namespace Ui {
@@ -22,12 +23,14 @@ class OpenDBDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit OpenDBDialog(const DBConnectParams &params, QWidget *parent = nullptr);
+    explicit OpenDBDialog(const DBConnectParams *current_params, QWidget *parent = nullptr);
     ~OpenDBDialog();
-    DBConnectParams* getDBParams();
+    CONNECTION_PARAMS* getDBParams();
 private slots:
-    void editHostChanged();
-    void checkOptions();
+    void editPresetChanged();
+    bool check();
+    void resizeAdvancedGroupBox();
+    void tryAccept();
 
 private:
     Ui::OpenDBDialog *ui;

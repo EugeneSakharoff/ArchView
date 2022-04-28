@@ -4,6 +4,8 @@
 #include "controlelement.h"
 #include <QCheckBox>
 
+//Класс наследуется от ControlElement, содержит в себе чекбокс
+//Используется чтобы отображать/не отображать сообщения
 class CheckBoxSelector : public ControlElement
 {
     Q_OBJECT
@@ -11,10 +13,10 @@ public:
     CheckBoxSelector(QWidget *parent, const QString& labeltext);
     ~CheckBoxSelector();
     bool isChecked();
-    virtual bool init(QSqlQuery* query);
-    virtual void init();
-    virtual void reset();
-    virtual void emitChanged();
+    bool init();
+    void reset();
+    void update();
+    void clear();
 private:
     QCheckBox *checkBox;
 };

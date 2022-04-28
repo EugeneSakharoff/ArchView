@@ -14,33 +14,36 @@
 #include "sql_globals.h"
 #include "globals.h"
 
+//Класс для хранения и представления параметров подключения к БД
+//Инкапсулирует параметры, умеет возвращать строку подключения
 class DBConnectParams
 {
 public:
-    DBConnectParams(const QString &name      = GLOBALS::DEFAULT_DB_NAME,
-                    const QString &host      = GLOBALS::DEFAULT_DB_HOST,
-                    const QString &addr      = GLOBALS::DEFAULT_DB_HOSTADDRESS,
-                    const QString &user      = GLOBALS::DEFAULT_DB_USERNAME,
-                    const QString &password  = GLOBALS::DEFAULT_DB_PASSWORD,
-                    const QString &port      = GLOBALS::DEFAULT_DB_PORT,
-                    const QString &driver    = GLOBALS::DEFAULT_DB_DRIVER);
+    DBConnectParams(const CONNECTION_PARAMS &params);
     ~DBConnectParams();
-    QString getDBName() const;
-    QString getUserName() const;
-    QString getPassword() const;
-    QString getPort() const;
+
+
     QString getHostName() const;
+    void setHostName(const QString &hostname);
     QString getHostAddr() const;
+    void setHostAddr(const QString &hostaddr);
+    QString getDBName() const;
+    void setDBName(const QString &dbname);
+    QString getDBUser() const;
+    void setDBUser(const QString &dbuser);
+    QString getDBPassword() const;
+    void setDBPassword(const QString &dbpassword);
+    QString getDBPort() const;
+    void setDBPort(const QString &dbport);
     QString getDriver() const;
+    void setDriver(const QString &driver);
+
+    const CONNECTION_PARAMS *getParams()const;
+
     QString toConnectParamsString() const;
+
 private:
-    QString       name;           //имя  БД
-    QString       hostName;       //имя  хоста
-    QString       driver;         //имя драйвера
-    QString       user;           //имя пользователя
-    QString       password;       //пароль
-    QString       hostAddress;    //IP хоств
-    QString       port;           //порт
+    CONNECTION_PARAMS params;
 };
 
 
@@ -55,10 +58,8 @@ public:
     explicit DataBase(QObject *parent = 0);
     ~DataBase();
     QSqlDatabase* getDbPointer();
-    DBConnectParams* getConnectParams();
     bool isConnected();
-    bool connectDataBase(const DBConnectParams &params,
-                         const bool createIfNotAvailable = true);    //соединение с БД, либо создание, если БД не существует
+    bool connectDataBase(const bool createIfNotAvailable = true);    //соединение с БД, либо создание, если БД не существует
 
     void insertValues(const QString &table, const QStringList &pos, const QStringList &values);    //добавить запись в таблицу
     bool createTable(const QString &table,const QString &structure);      //создать таблицу
@@ -66,13 +67,12 @@ public:
     float previousValue(const int varid);         //последнее (по времени) значение переменной
     QSqlQuery* exec(const QString &querytext);      //выполить произвольный запрос
     void close();
-
+    DBConnectParams *connectParams;
+    DBConnectParams *serviceParams;
 private:
-
-    QSqlDatabase db;    //класс для доступа к БД
-    DBConnectParams connectParams = DBConnectParams();
-    char openDataBase(const DBConnectParams &params);   //внутренняя функция для установки соединения с БД
-    bool createDataBase(const DBConnectParams &params); //создание БД
+    QSqlDatabase db;    //класс для доступа к
+    char openDataBase(const DBConnectParams *params);   //внутренняя функция для установки соединения с БД
+    bool createDataBase(); //создание БД
     bool forward_only; //TODO - setForwardOnly!!!!!!!!!!!!!!!!!
     bool connected = false;
 };

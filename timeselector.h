@@ -27,10 +27,12 @@ public:
     QString getTimeStr() const;
     QDateTime getTime() const;
     void setTime(const QDateTime &time);
-    virtual bool init(QSqlQuery* query);
-    virtual void init();
-    virtual void reset();
-    virtual void emitChanged();
+    bool init(QSqlQuery* query);
+    bool init();
+    void clear();
+    void reset();
+    void update();
+
 
 
 

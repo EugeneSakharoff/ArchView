@@ -1,5 +1,7 @@
 #include "controlbuttons.h"
 
+//Кнопки "Добавить" и "Добавить соло"
+
 ControlButtons::ControlButtons(QWidget *parent,const QString& labeltext):ControlElement(parent,labeltext)
 {
 addButton = new QPushButton(groupBox);
@@ -26,19 +28,28 @@ delete addButton;
 delete soloButton;
 }
 
-void ControlButtons::init()
+bool ControlButtons::init()
 {
-
+setEnabled(true);
+return 0;
 }
+
+void ControlButtons::clear()
+{
+setEnabled(false);
+}
+
 void ControlButtons::reset()
 {
 
 }
 
-void ControlButtons::emitChanged()
+
+void ControlButtons::update()
 {
 
 }
+
 
 void ControlButtons::setLabelText(const QString &text)
 {

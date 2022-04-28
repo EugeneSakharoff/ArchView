@@ -66,16 +66,17 @@ private:
 
     void updatePlot();          //обновить график
     void createMenuBar();       //создание главного меню окна
-    void setDataBase(const DBConnectParams &params);         //инициализация БД
+    void setDataBase(const CONNECTION_PARAMS &params, const CONNECTION_PARAMS &service);         //инициализация БД
     void initModel();            //инициализация модели представления данных
     void initPlot();             //инициализация графика
     void changeLayout(); //сменить вид
     void initInterface();
     void resetInterface();
-
+    void timerEvent(QTimerEvent *event);
 
     //получить список переменных для отображения в таблице и на графике
     void updateQuery();         //обновление текста запроса в текстовом поле
+    int timer_num;  // номер таймера для автообновления
 };
 
 #endif

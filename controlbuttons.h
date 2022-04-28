@@ -4,20 +4,21 @@
 #include "controlelement.h"
 #include <QObject>
 #include <QPushButton>
-
+//Кнопки "Добавить" и "Добавить соло"
 class ControlButtons : public ControlElement
 {
     Q_OBJECT
 public:
     ControlButtons(QWidget *parent, const QString& labeltext);
     ~ControlButtons();
-    virtual void init();
-    virtual void reset();
-    virtual void emitChanged();
+    bool init();
+    void reset();
+    void clear();
     void setLabelText(const QString &text);
     void setAddButtonText(const QString &text);
     void setSoloButtonText(const QString &text);
     void setEnabled(const bool enabled);
+    virtual void update();
 signals:
     void addClicked();
     void soloClicked();

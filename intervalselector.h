@@ -5,6 +5,8 @@
 #include <QWidget>
 #include "timeselector.h"
 #include "intervalslider.h"
+
+//класс содержит в себе два TimeSelector-а (начало и конец) и IntervalSlider, обеспечивает их взаимодействие
 class IntervalSelector: public QObject
 {
     Q_OBJECT
@@ -12,9 +14,10 @@ public:
     IntervalSelector(QWidget *parent);
     ~IntervalSelector();
     QPair<QString,QString> getInterval();
-    void init();
-    bool init(QSqlQuery* query, QSqlQuery* stages);
+    void clear();
+    bool init(QSqlDatabase* db);
     void reset();
+    void update();
 
 public slots:
     void startSelectorChanged();
@@ -27,7 +30,7 @@ private:
     TimeSelector* startSelector;
     TimeSelector* endSelector;
     IntervalSlider* slider;
-    QSqlQuery* init_query;
+    QSqlQuery* minmax_query;
     QSqlQuery* stages_query;
 };
 

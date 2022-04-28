@@ -1,5 +1,6 @@
 #include "customquerymodel.h"
 
+//класс для получения данных из БД по запросу, наследует QSqlQueryModel с корректным отображением заголовков столбцов
 CustomQueryModel::CustomQueryModel(QObject *parent) : QSqlQueryModel(parent)
 {
 
@@ -49,11 +50,13 @@ if (role == Qt::BackgroundRole)
 return (v);
 }
 
+//Отображение русскоязычных названий заголовка таблицы на SQL псевдонимы
 QStringList CustomQueryModel::headersAliases() const
 {
 return headers_aliases;
 }
 
+//Отображение русскоязычных названий заголовка таблицы на номера столбцов
 int CustomQueryModel::headerToIndex(const QString &header) const
 {
 return header_to_index.value(header);

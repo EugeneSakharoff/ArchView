@@ -11,6 +11,8 @@
 #include <QToolTip>
 #include <QDateTime>
 
+
+//Слайдер с двумя ручками и отображением "этапов"
 class ctkRangeSliderPrivate
 {
   Q_DECLARE_PUBLIC(ctkRangeSlider);
@@ -578,7 +580,8 @@ void ctkRangeSlider::paintEvent( QPaintEvent* )
   QLinearGradient currentGradient;
   int currentColor = 6;
 
-  if (sliderSections().isEmpty())
+  //если не нужно отображать этапы
+  if (sliderSections().isEmpty()|| !(GLOBALS::SHOW_SLIDER_SECTIONS))
   {
       currentGradient.setColorAt(0, QColor(Qt::GlobalColor(9)).darker(120));
       currentGradient.setColorAt(1, QColor(Qt::GlobalColor(9)).lighter(160));
@@ -586,7 +589,7 @@ void ctkRangeSlider::paintEvent( QPaintEvent* )
       painter.setPen(QPen(QColor(Qt::GlobalColor(9)).lighter(150), 0));
       painter.drawRect( rangeBox.intersected(groove) );
   }
-  else
+  else //если нужно - итерируем по списку этапов и отрисовываем их по-очереди
   foreach (const QString &key, sliderSections().keys())
   {
     currentSection=QRect(QPoint(sr.left()+sr.width()*sliderSections().value(key), sr.center().y() - 2),
@@ -853,7 +856,6 @@ bool ctkRangeSlider::event(QEvent* _event)
 IntervalSlider::IntervalSlider(QWidget *parent,const QString labeltext):ControlElement(parent,labeltext)
 {
 slider = new ctkRangeSlider(Qt::Horizontal,parent);
-
 layout->addWidget(slider);
 }
 
@@ -862,10 +864,6 @@ IntervalSlider::~IntervalSlider()
 delete slider;
 }
 
-void IntervalSlider::emitChanged()
-{
-emit changed(slider->minimumValue(),slider->maximumValue());
-}
 
 bool IntervalSlider::init(QSqlQuery *query, QSqlQuery *stages)
 {
@@ -877,11 +875,11 @@ try
     init_query = query;
     qint64 start,end;
     start = init_query->value(0).toDateTime().toSecsSinceEpoch();
-    end = init_query->value(1).toDateTime().toSecsSinceEpoch();
+    end = init_query->value(1).toDateTime().toSecsSinceEpoch()+1;
     slider->setRange(start,end);
     reset();
     slider->setEnabled(true);
-    connect(slider,&ctkRangeSlider::valuesChanged,this,&IntervalSlider::emitChanged);
+    connect(slider,&ctkRangeSlider::valuesChanged,this,[=](){emit changed(slider->minimumValue(),slider->maximumValue());});
     QMap<QString,double> tmp;
     if(stages->first())
       {
@@ -898,15 +896,14 @@ try
   catch (...)
     {
     toDebug("!!!ERROR!!! slider initialization failed!",DT_ERROR);
-    init();
+    clear();
     return false;
     }
 }
 
-void IntervalSlider::init()
+void IntervalSlider::clear()
 {
 slider->setEnabled(false);
-disconnect(slider,&ctkRangeSlider::valuesChanged,this,&IntervalSlider::emitChanged);
 }
 
 void IntervalSlider::reset()
@@ -922,4 +919,24 @@ slider->setValues(min,max);
 void IntervalSlider::setSliderSections(QMap<QString,double> sect)
 {
 slider->setSliderSections(sect);
+}
+
+void IntervalSlider::update()
+{
+
+}
+
+bool IntervalSlider::init()
+{
+return 1;
+}
+
+qint64 IntervalSlider::getMin()
+{
+return slider->minimumValue();
+}
+
+qint64 IntervalSlider::getMax()
+{
+return slider->maximumValue();
 }

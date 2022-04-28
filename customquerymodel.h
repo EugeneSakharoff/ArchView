@@ -7,9 +7,9 @@
 #include <QDebug>
 #include "sql_globals.h"
 #include "globals.h"
-
-class CustomQueryModel : public QSqlQueryModel
 //класс для получения данных из БД по запросу, наследует QSqlQueryModel с корректным отображением заголовков столбцов
+class CustomQueryModel : public QSqlQueryModel
+
 {
     Q_OBJECT
 public:
@@ -20,10 +20,10 @@ public:
     QVariant data(const QModelIndex &idx, int role) const;
     QStringList headersAliases() const;
     void clear();
-private:
-    QMap<QString,int> alias_to_header_index;            //словарь индексов столбцов по псевдониму
-    QMap<QString,int> header_to_index;
-    QStringList headers_aliases;
+private:  
+    QMap<QString,int> alias_to_header_index;//отображение sql псевдонимов на номера столбцов
+    QMap<QString,int> header_to_index;//отображение русскоязычных заголовков таблицы на номера столбцов
+    QStringList headers_aliases;//список sql псевдонимов
 };
 
 

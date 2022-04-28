@@ -1,4 +1,6 @@
 #include "checkboxselector.h"
+//Класс наследуется от ControlElement, содержит в себе чекбокс
+//Используется чтобы отображать/не отображать сообщения
 
 CheckBoxSelector::CheckBoxSelector(QWidget *parent,const QString& labeltext):ControlElement(parent,labeltext)
 {
@@ -9,50 +11,36 @@ layout->addWidget(checkBox);
 CheckBoxSelector::~CheckBoxSelector()
 {
 delete checkBox;
-delete init_query;
 }
 
+//возвращает True если чекбокс отмечен. Нужно для инкапсуляции
 bool CheckBoxSelector::isChecked()
 {
 if (checkBox->isChecked()) return true;
 else return false;
 }
 
-
-bool CheckBoxSelector::init(QSqlQuery* query)
+//инициализация
+bool CheckBoxSelector::init()
 {
 toDebug(label->text()+" Checkbox init",DT_TRACE);
-init_query = query;
-if (query==nullptr)
-  {
-  toDebug(label->text()+" CheckboxQuery is NULL",DT_ERROR);
-  init();
-  return false;
-  }
-if (!query->first())
-  {
-  toDebug(label->text()+" CheckboxQuery is empty",DT_ERROR);
-  init();
-  return false;
-  }
 checkBox->setChecked(GLOBALS::MESSAGES_ON_BY_DEFAULT);
 checkBox->setEnabled(true);
 checkBox->update();
-connect(checkBox,&QCheckBox::clicked,this,&CheckBoxSelector::emitChanged);
-toDebug(label->text()+" CheckboxQuery is OK",DT_CONTROLS);
+connect(checkBox,&QCheckBox::clicked,this,[=](){emit changed();});
 return true;
 }
 
-void CheckBoxSelector::init()
+//Пустая инициализация (без sql запроса).
+void CheckBoxSelector::clear()
 {
 toDebug(label->text()+" Checkbox init(empty)",DT_CONTROLS);
 checkBox->setChecked(false);
 checkBox->setEnabled(false);
 checkBox->update();
-disconnect(checkBox,&QCheckBox::clicked,this,&CheckBoxSelector::emitChanged);
 }
 
-
+//сброс установок. В данном случае просто устанавливает значение в MESSAGES_ON_BY_DEFAULT
 void CheckBoxSelector::reset()
 {
 toDebug(label->text()+" checkbox reset",DT_CONTROLS);
@@ -60,8 +48,9 @@ checkBox->setChecked(GLOBALS::MESSAGES_ON_BY_DEFAULT);
 checkBox->update();
 }
 
-void CheckBoxSelector::emitChanged()
+void CheckBoxSelector::update()
 {
-toDebug(label->text()+" Checkbox changed",DT_CONTROLS);
-emit changed();
+
 }
+
+

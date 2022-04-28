@@ -1,6 +1,9 @@
 #include "sql_query.h"
 
+//Вспомогательные классы, чтобы составлять сложные многоуровневые SQL запросы
 
+//----------------------------------------------------------------------------------------
+//конструкция типа JOIN table ON col1=col2
 SqlJoin::SqlJoin(const QString &table,const QString &col1,const QString &col2)
 {
 m_table = table;
@@ -15,12 +18,12 @@ m_col1 = col1;
 m_col2 = col2;
 }
 
-
 QString SqlJoin::toString() const
 {
 return "JOIN "+m_table+" ON "+m_col1+ "="+m_col2;
 }
 
+//----------------------------------------------------------------------------------------
 //конструкция типа WHERE value IN (v1,v2...)
 SqlFilter::SqlFilter(const QString &item,const QStringList &values)
 {
@@ -81,6 +84,8 @@ result += ")";
 return result;
 }
 
+//----------------------------------------------------------------------------------------
+//Класс строит сложный запрос SELECT, используя предыдущие 2 класса
 SqlSelectQuery::SqlSelectQuery()
 {
 m_items = QStringList();
@@ -198,6 +203,7 @@ QString SqlSelectQuery::buildSelectQueryS(const QStringList &items,
     return querytext;
 }
 
+//строит запрос типа SELECT query1 UNION query2
 QString SqlSelectQuery::buildUnion(const QString &query1, const QString &query2,
                                 const QString &orderby,const bool order_desc)
 {

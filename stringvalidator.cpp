@@ -1,5 +1,6 @@
 #include "stringvalidator.h"
 
+//Класс для автоподсказки при печатании в комбобоксах
 stringValidator::stringValidator(QSet<QString> &list, QObject *parent) : QValidator(parent)
 {
 allowed_list = list;

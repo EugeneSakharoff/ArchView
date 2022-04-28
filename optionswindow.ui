@@ -48,6 +48,20 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QCheckBox" name="checkBoxAllowAdvDB">
+         <property name="text">
+          <string>Разрешить ввод параметров вручную в меню открытия архива</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkBoxShowSliderSections">
+         <property name="text">
+          <string>Отображать этапы работы на временной шкале</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tabDB">
@@ -58,7 +72,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidgetDB">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tabGeneral">
           <attribute name="title">

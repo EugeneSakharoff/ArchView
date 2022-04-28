@@ -1,6 +1,6 @@
 #include "controlelement.h"
 
-
+//Абстрактный родительский класс для представления элементов управления запросом (переменные, временной интервал и т.п.)
 ControlElement::ControlElement(QWidget *parent, const QString& labeltext)
 {
 groupBox = new QGroupBox(parent);

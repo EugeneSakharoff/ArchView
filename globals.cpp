@@ -2,23 +2,29 @@
 #include <QSettings>
 #include <QTextCodec>
 #include "sql_globals.h"
+#include "crypto.h"
 
 const QString HOSTS_CONFIG_FILE = "hosts.ini";
 const QString CONFIG_FILE = "ArchView.ini";
 
 namespace GLOBALS {
- bool DEBUG_TRACE;
- bool DEBUG_SQL;
- bool DEBUG_ERRORS;
- bool DEBUG_WARNINGS;
- bool DEBUG_CONTROLS;
- bool DEBUG_PLOT;
- bool DEBUG_TABLE;
- bool DEBUG_TEST_TABLES;
- bool DEBUG_DB_CONNECTION;
+//параметры для вывода консольных сообщений (для упрощения отладки). См. функцию toDebug()
+ bool DEBUG_TRACE;//Будет выводить название текущей функции. Полезно, чтобы быстро понять в какой функции произошла ошибка
+ bool DEBUG_SQL;//Передаваемые в БД SQL запросы
+ bool DEBUG_ERRORS;//Ошибки
+ bool DEBUG_WARNINGS;//Некритичные ошибки
+ bool DEBUG_CONTROLS;//События, связанные с элементами управления (подклассы ControlElement)
+ bool DEBUG_PLOT;//Построение графиков
+ bool DEBUG_TABLE;//События , связанные с отображением таблицы
+ bool DEBUG_TEST_TABLES;//Построение и наполнение тестовой БД
+ bool DEBUG_DB_CONNECTION;//Различная информация о подключении к БД и взаимодействии с ней
 
+ bool ENCRYPT_PASSWORD;
+ const quint64 KEY = Q_UINT64_C(0x0c2ad4a4acb9f023);
 
-
+//параметры подключения БД. Считываются из файла CONFIG_FILE в функции readSettings()
+ QString  DEFAULT_CONNECTION_NAME;
+ QString  DEFAULT_PRESET;
  QString  DEFAULT_DB_NAME;
  QString  SERVICE_DB_NAME;
  QString  DEFAULT_DB_USERNAME;
@@ -33,70 +39,60 @@ namespace GLOBALS {
  QString  SERVICE_DB_HOSTADDRESS;
  QString  SERVICE_DB_PORT;
  QStringList AVAILABLE_DRIVERS;
+ CONNECTION_PARAMS SERVICE_CONNECTION;
 
+ //формат дейттайм нужен для корректного преобразования дейттайма в строку и обратно
  QString DEFAULT_DATETIME_FORMAT;
 
+ bool CONNECT_ON_STARTUP; //подключаться автоматически при запуске программы
+ bool MESSAGES_ON_BY_DEFAULT; //Сообщения из таблицы messages отображаются вместе со всем остальным при запуске
+ bool HIDE_COLUMNS_BY_DEFAULT; //Столбцы из списка SQL_GLOBALS::DEFAUL_HIDDEN_COLUMNS будут скрыты при запуске
+ bool SHOW_QUERY;//Отображать поле с текстом запроса
+ bool EDIT_QUERY;//Разрешить редактирование текста запроса
+ bool ALLOW_ADVANCED_DB_SETTINGS;//Разрешить подробные настройки подключения в меню открытия БД
+ bool SHOW_SLIDER_SECTIONS;//Отображать "этапы" на шкале выбора времени
+ bool AUTO_UPDATE;//Обновлять информацию по таймеру
+ int AUTO_UPDATE_TIMER_INTERVAL; //Интервал таймера
 
+ QString ABOUT_TEXT; //Текст для окна "О программе"
+ QMap<QString, CONNECTION_PARAMS> CONNECTION_PRESETS; //отображение названия БД на пресет пораметров подключения
 
- bool CONNECT_ON_STARTUP;
- bool MESSAGES_ON_BY_DEFAULT;
- bool HIDE_COLUMNS_BY_DEFAULT;
- bool SHOW_QUERY;
- bool EDIT_QUERY;
-
- QString ABOUT_TEXT;
- QMap<QString, QString> HOSTS_MAP;
-
-QMap<QString,QString> MESSAGES_TO_SLIDER_SECTIONS;
+QMap<QString,QString> MESSAGES_TO_SLIDER_SECTIONS; //отображение сообщений на "этапы" на шкале выбора времени
 QStringList STAGE_NAMES;
 QStringList STAGE_MSGS;
-/*
-const bool DEBUG_TRACE         = settings.value("debug/DEBUG_TRACE","false").toBool();
-const bool DEBUG_SQL           = settings.value("debug/DEBUG_SQL","false").toBool();
-const bool DEBUG_ERRORS        = settings.value("debug/DEBUG_ERRORS","false").toBool();
-const bool DEBUG_WARNINGS      = settings.value("debug/DEBUG_WARNINGS","false").toBool();
-const bool DEBUG_CONTROLS      = settings.value("debug/DEBUG_CONTROLS","false").toBool();
-const bool DEBUG_PLOT          = settings.value("debug/DEBUG_PLOT","false").toBool();
-const bool DEBUG_TABLE         = settings.value("debug/DEBUG_TABLE","false").toBool();
-const bool DEBUG_TEST_TABLES   = settings.value("debug/DEBUG_TEST_TABLES","false").toBool();
-const bool DEBUG_DB_CONNECTION = settings.value("debug/DEBUG_DB_CONNECTION","false").toBool();
-
-const bool CONNECT_ON_STARTUP      = settings.value("globals/CONNECT_ON_STARTUP","false").toBool();
-const bool MESSAGES_ON_BY_DEFAULT  = settings.value("globals/MESSAGES_ON_BY_DEFAULT","false").toBool();
-const bool HIDE_COLUMNS_BY_DEFAULT = settings.value("globals/HIDE_COLUMNS_BY_DEFAULT","false").toBool();
-
-const QString DEFAULT_DATETIME_FORMAT = settings.value("globals/DEFAULT_DATETIME_FORMAT","dd-MM-yyyy hh:mm:ss").toString();
-const QString ABOUT_TEXT = QString::fromLocal8Bit(settings.value("globals/ABOUT_TEXT","ООО 'СКУ СИСТЕМА' просмотр архива.").toByteArray());
-
-QMap<QString, QString> HOSTS_MAP = {};
-
-const QString DEFAULT_DB_NAME        = settings.value("db/DEFAULT_DB_NAME",        "test").toString();
-const QString SERVICE_DB_NAME        = settings.value("db/SERVICE_DB_NAME",        "template1").toString();
-const QString DEFAULT_DB_USERNAME    = settings.value("db/DEFAULT_DB_USERNAME",    "postgres").toString();
-const QString DEFAULT_DB_PASSWORD    = settings.value("db/DEFAULT_DB_PASSWORD",    "postgres").toString();
-const QString SERVICE_DB_USERNAME    = settings.value("db/SERVICE_DB_USERNAME",    "postgres").toString();
-const QString SERVICE_DB_PASSWORD    = settings.value("db/SERVICE_DB_PASSWORD",    "postgres").toString();
-const QString DEFAULT_DB_DRIVER      = settings.value("db/DEFAULT_DB_DRIVER",      "QPSQL").toString();
-const QString DEFAULT_DB_HOST        = settings.value("db/DEFAULT_DB_HOST",        "localhost").toString();
-const QString DEFAULT_DB_HOSTADDRESS = settings.value("db/DEFAULT_DB_HOSTADDRESS", "127.0.0.1").toString();
-const QString DEFAULT_DB_PORT        = settings.value("db/DEFAULT_DB_PORT",        "5432").toString();
-const QString SERVICE_DB_HOST        = settings.value("db/SERVICE_DB_HOST",        "localhost").toString();
-const QString SERVICE_DB_HOSTADDRESS = settings.value("db/SERVICE_DB_HOSTADDRESS", "127.0.0.1").toString();
-const QString SERVICE_DB_PORT        = settings.value("db/SERVICE_DB_PORT",        "5432").toString();
-const QStringList AVAILABLE_DRIVERS  = QStringList({DEFAULT_DB_DRIVER});
-*/
 }
 
-void readHostsList()
+//Читает пресеты подключения из hosts.ini
+void readConnectionPresets()
 {
 QSettings hosts(HOSTS_CONFIG_FILE,QSettings::IniFormat);
-foreach (const QString &hostname,hosts.allKeys())
-  GLOBALS::HOSTS_MAP.insert(hostname,hosts.value(hostname).toString());
+using namespace GLOBALS;
+foreach (const QString &group, hosts.childGroups())
+{
+  hosts.beginGroup(group);
+  QString tmp;
+  tmp = hosts.value("NAME",DEFAULT_CONNECTION_NAME).toString();
+  CONNECTION_PRESETS.insert(tmp,CONNECTION_PARAMS());
+  CONNECTION_PRESETS[tmp].dbName = hosts.value("DB_NAME",DEFAULT_DB_NAME).toString();
+  CONNECTION_PRESETS[tmp].dbUser = hosts.value("DB_USER",DEFAULT_DB_USERNAME).toString();
+  CONNECTION_PRESETS[tmp].dbPassword = hosts.value("DB_PASSWORD",DEFAULT_DB_PASSWORD).toString();
+  if (ENCRYPT_PASSWORD)
+  {
+       Crypto crypto(KEY);
+       CONNECTION_PRESETS[tmp].dbPassword = crypto.decryptToString(CONNECTION_PRESETS[tmp].dbPassword);
+       toDebug(QString("Password decrypted for preset %1").arg(CONNECTION_PRESETS[tmp].dbName),DT_DATABASE);
+  }
+  CONNECTION_PRESETS[tmp].dbPort = hosts.value("DB_PORT",DEFAULT_DB_PORT).toString();
+  CONNECTION_PRESETS[tmp].driver = hosts.value("DB_DRIVER",DEFAULT_DB_DRIVER).toString();
+  CONNECTION_PRESETS[tmp].hostName = hosts.value("DB_HOST",DEFAULT_DB_HOST).toString();
+  CONNECTION_PRESETS[tmp].hostAddress = hosts.value("DB_HOSTADDRESS",DEFAULT_DB_HOSTADDRESS).toString();
+  hosts.endGroup();
+}
 }
 
+//вывод на консоль различных типов отладочных сообщений.
 void toDebug(const QVariant &msg, char type)
 {
-QSettings settings(CONFIG_FILE,QSettings::IniFormat);
 switch (type)
   {
   case DT_ERROR:
@@ -130,6 +126,7 @@ switch (type)
   }
 }
 
+//Читает файл настроек, либо инициализирует значениями по-умолчанию
 void readSettings()
 {
 QSettings settings(CONFIG_FILE,QSettings::IniFormat);
@@ -149,23 +146,38 @@ DEBUG_TABLE         = settings.value("debug/DEBUG_TABLE","false").toBool();
 DEBUG_TEST_TABLES   = settings.value("debug/DEBUG_TEST_TABLES","false").toBool();
 DEBUG_DB_CONNECTION = settings.value("debug/DEBUG_DB_CONNECTION","false").toBool();
 
-CONNECT_ON_STARTUP      = settings.value("globals/CONNECT_ON_STARTUP","false").toBool();
-MESSAGES_ON_BY_DEFAULT  = settings.value("globals/MESSAGES_ON_BY_DEFAULT","false").toBool();
-HIDE_COLUMNS_BY_DEFAULT = settings.value("globals/HIDE_COLUMNS_BY_DEFAULT","false").toBool();
-SHOW_QUERY              = settings.value("globals/SHOW_QUERY","false").toBool();
-EDIT_QUERY              = settings.value("globals/EDIT_QUERY","false").toBool();
+ENCRYPT_PASSWORD           = settings.value("globals/ENCRYPT_PASSWORD","false").toBool();
+CONNECT_ON_STARTUP         = settings.value("globals/CONNECT_ON_STARTUP","false").toBool();
+MESSAGES_ON_BY_DEFAULT     = settings.value("globals/MESSAGES_ON_BY_DEFAULT","false").toBool();
+HIDE_COLUMNS_BY_DEFAULT    = settings.value("globals/HIDE_COLUMNS_BY_DEFAULT","false").toBool();
+SHOW_QUERY                 = settings.value("globals/SHOW_QUERY","false").toBool();
+EDIT_QUERY                 = settings.value("globals/EDIT_QUERY","false").toBool();
+ALLOW_ADVANCED_DB_SETTINGS = settings.value("globals/ALLOW_ADVANCED_DB_SETTINGS","false").toBool();
+SHOW_SLIDER_SECTIONS       = settings.value("globals/SHOW_SLIDER_SECTIONS","false").toBool();
+AUTO_UPDATE                = settings.value("globals/AUTO_UPDATE","false").toBool();
+AUTO_UPDATE_TIMER_INTERVAL = settings.value("globals/AUTO_UPDATE_TIMER_INTERVAL","10000").toInt();
 
 DEFAULT_DATETIME_FORMAT = settings.value("globals/DEFAULT_DATETIME_FORMAT","dd-MM-yyyy hh:mm:ss").toString();
 ABOUT_TEXT = settings.value("globals/ABOUT_TEXT","ООО 'СКУ СИСТЕМА' просмотр архива.").toString();
 
-HOSTS_MAP = {};
-
+DEFAULT_CONNECTION_NAME        = settings.value("db/DEFAULT_CONNECTION_NAME",        "default").toString();
+DEFAULT_PRESET         = settings.value("db/DEFAULT_PRESET",        "test").toString();
 DEFAULT_DB_NAME        = settings.value("db/DEFAULT_DB_NAME",        "test").toString();
 SERVICE_DB_NAME        = settings.value("db/SERVICE_DB_NAME",        "template1").toString();
 DEFAULT_DB_USERNAME    = settings.value("db/DEFAULT_DB_USERNAME",    "postgres").toString();
-DEFAULT_DB_PASSWORD    = settings.value("db/DEFAULT_DB_PASSWORD",    "postgres").toString();
+
+
+DEFAULT_DB_PASSWORD    = settings.value("db/DEFAULT_DB_PASSWORD",    "").toString();
+SERVICE_DB_PASSWORD    = settings.value("db/SERVICE_DB_PASSWORD",    "").toString();
+if (!DEFAULT_DB_PASSWORD.isEmpty() && ENCRYPT_PASSWORD)
+{
+    Crypto crypto(KEY);
+    DEFAULT_DB_PASSWORD    = crypto.decryptToString(DEFAULT_DB_PASSWORD);
+    SERVICE_DB_PASSWORD    = crypto.decryptToString(SERVICE_DB_PASSWORD);
+    toDebug("Passwords from .ini file decrypted" ,DT_DATABASE);
+}
+
 SERVICE_DB_USERNAME    = settings.value("db/SERVICE_DB_USERNAME",    "postgres").toString();
-SERVICE_DB_PASSWORD    = settings.value("db/SERVICE_DB_PASSWORD",    "postgres").toString();
 DEFAULT_DB_DRIVER      = settings.value("db/DEFAULT_DB_DRIVER",      "QPSQL").toString();
 DEFAULT_DB_HOST        = settings.value("db/DEFAULT_DB_HOST",        "localhost").toString();
 DEFAULT_DB_HOSTADDRESS = settings.value("db/DEFAULT_DB_HOSTADDRESS", "127.0.0.1").toString();
@@ -173,7 +185,17 @@ DEFAULT_DB_PORT        = settings.value("db/DEFAULT_DB_PORT",        "5432").toS
 SERVICE_DB_HOST        = settings.value("db/SERVICE_DB_HOST",        "localhost").toString();
 SERVICE_DB_HOSTADDRESS = settings.value("db/SERVICE_DB_HOSTADDRESS", "127.0.0.1").toString();
 SERVICE_DB_PORT        = settings.value("db/SERVICE_DB_PORT",        "5432").toString();
-AVAILABLE_DRIVERS  = QStringList({DEFAULT_DB_DRIVER});
+
+SERVICE_CONNECTION.hostName = SERVICE_DB_HOST;
+SERVICE_CONNECTION.hostAddress = SERVICE_DB_HOSTADDRESS;
+SERVICE_CONNECTION.dbPort = SERVICE_DB_PORT;
+SERVICE_CONNECTION.dbName = SERVICE_DB_NAME;
+SERVICE_CONNECTION.dbUser = SERVICE_DB_USERNAME;
+SERVICE_CONNECTION.dbPassword = SERVICE_DB_PASSWORD;
+SERVICE_CONNECTION.driver = DEFAULT_DB_DRIVER;
+
+QString temp = settings.value("db/AVAILABLE_DRIVERS",DEFAULT_DB_DRIVER).toString();
+AVAILABLE_DRIVERS<<temp.split(" ");
 
 using namespace SQL_GLOBALS;
 VALUES_TABLE       = settings.value("sql/VALUES_TABLE",       "vals").toString();
@@ -219,9 +241,8 @@ HEADER_PRECISION = settings.value("interface/HEADER_PRECISION", "Точност�
 HEADER_VALUE     = settings.value("interface/HEADER_VALUE",     "Значение").toString();
 HEADER_VALUE_RAW = settings.value("interface/HEADER_VALUE_RAW", "Точное значение").toString();
 
-QString temp = settings.value("interface/HIDDEN_COLUMNS","").toString();
+temp = settings.value("interface/HIDDEN_COLUMNS","").toString();
 DEFAULT_HIDDEN_COLUMNS<<temp.split(" ");
-
 
 int size = settings.beginReadArray("slidersections");
 for (int i = 0; i < size; ++i) {

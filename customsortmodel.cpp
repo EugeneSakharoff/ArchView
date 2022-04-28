@@ -1,5 +1,5 @@
 #include "customsortmodel.h"
-
+//класс нужен для "правильной" сортировки столбцов, переопределяет функцию lessThan()
 CustomSortModel::CustomSortModel(QObject *parent) : QSortFilterProxyModel(parent)
 {
 

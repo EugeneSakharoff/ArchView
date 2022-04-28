@@ -8,6 +8,8 @@
 // CTK includes
 //#include <ctkPimpl.h>
 
+
+//Слайдер с двумя ручками и отображением "этапов"
 class QStylePainter;
 class ctkRangeSliderPrivate;
 
@@ -198,16 +200,20 @@ class IntervalSlider : public ControlElement
 public:
     IntervalSlider(QWidget *parent,const QString labeltext);
     ~IntervalSlider();
-    virtual bool init(QSqlQuery* query, QSqlQuery *stages);
-    virtual void init();
-    virtual void reset();
+    bool init(QSqlQuery* query, QSqlQuery *stages);
+    bool init();
+    void clear();
+    void reset();
+    void update();
     void setValues(int min, int max);
-    virtual void emitChanged();
     void setSliderSections(QMap<QString,double> sect);
+    qint64 getMin();
+    qint64 getMax();
 signals:
     void changed(int min, int max);
 private:
     ctkRangeSlider *slider;
+    QSqlQuery *init_query;
 };
 
 #endif // INTERVALSLIDER_H

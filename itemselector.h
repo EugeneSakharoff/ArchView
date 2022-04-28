@@ -16,9 +16,10 @@ class ItemSelector: public QObject
 public:
     ItemSelector(QWidget* parent);
     ~ItemSelector();
-    void init(QSqlQuery *name_descr_query, QSqlQuery *group_query);
-    void init();
+    bool init(QSqlDatabase *db);
+    void clear();
     void reset();
+    void update();
     QSet<QString> varSet();
     QSet<QString> fullSet();
 
@@ -35,7 +36,8 @@ private:
     void addValue();
     void soloValue();
     QSqlQueryModel* model;
-    QSqlQuery *init_query;
+    QSqlQuery *namedescr_query;
+    QSqlQuery *group_query;
     QSqlQueryModel* group_model;
     QDataWidgetMapper *mapper;
     ComboBoxSelector* varSelector;

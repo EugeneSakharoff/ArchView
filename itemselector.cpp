@@ -1,9 +1,8 @@
 #include "itemselector.h"
 
-
+//класс содержит в себе три  ComboboxSelector-а и ControlButtons
 ItemSelector::ItemSelector(QWidget* parent)
 {
-
 groupSelector = new ComboBoxSelector(parent, "Группа",true);
 varSelector = new ComboBoxSelector(parent, "Переменная",true);
 descrSelector = new ComboBoxSelector(parent, "Описание",false);
@@ -12,7 +11,10 @@ buttons = new ControlButtons(parent,"");
 model = new QSqlQueryModel(this);
 group_model = new QSqlQueryModel(this);
 mapper = new QDataWidgetMapper(this);
-
+namedescr_query = nullptr;
+group_query = nullptr;
+connect(buttons,&ControlButtons::addClicked,this,&ItemSelector::addValue);
+connect(buttons,&ControlButtons::soloClicked,this,&ItemSelector::soloValue);
 }
 
 ItemSelector::~ItemSelector()
@@ -22,15 +24,20 @@ delete groupSelector;
 delete descrSelector;
 delete buttons;
 delete model;
-delete group_model;
 delete mapper;
+if (namedescr_query!=nullptr)
+  delete namedescr_query;
+if (group_query!=nullptr)
+  delete group_query;
 }
 
+//набор текущих выбранных переменных
 QSet<QString> ItemSelector::varSet()
 {
 return current_set;
 }
 
+//все доступные переменные
 QSet<QString> ItemSelector::fullSet()
 {
 QSet<QString> res;
@@ -40,36 +47,39 @@ return res;
 }
 
 
-
-void ItemSelector::init(QSqlQuery *name_descr_query, QSqlQuery *group_query)
+//инициализация двумя SQL запросами, один для получения списка имен и описаний, второй для групп
+bool ItemSelector::init(QSqlDatabase *db)
 {
 toDebug("ItemSelector init (query)",DT_CONTROLS);
-init_query = name_descr_query;
-model->setQuery(*name_descr_query);
-group_model->setQuery(*group_query);
-mapper->setModel(model);
-varSelector->init(model,0,mapper,0);
-groupSelector->init(group_model,0);
-descrSelector->init(model,2,mapper,2);
-connect(descrSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::descrSelectorChanged);
-connect(groupSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::groupSelectorChanged);
-connect(varSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::varSelectorChanged);
-connect(buttons,&ControlButtons::addClicked,this,&ItemSelector::addValue);
-connect(buttons,&ControlButtons::soloClicked,this,&ItemSelector::soloValue);
+
+using namespace SQL_GLOBALS;
+namedescr_query = new QSqlQuery(*db);
+group_query = new QSqlQuery(*db);
+namedescr_query->prepare(SqlSelectQuery::buildSelectQuery({NAME_COLUMN,GROUPID_COLUMN,DESCRIPTION_COLUMN},DESCRIPTIONS_TABLE,{},{},false,NAME_COLUMN));
+group_query->prepare(SqlSelectQuery::buildSelectQuery({NAME_COLUMN},GROUPS_TABLE,{},{},true,NAME_COLUMN));
+
+update();
 current_set = {};
 addValue();
 buttons->setSoloButtonText(UI_GLOBALS::ALIAS_FOR_SOLO);
+return 0;
 }
 
-void ItemSelector::init()
+void ItemSelector::clear()
 {
-toDebug("ItemSelector init (empty)",DT_CONTROLS);
+toDebug("ItemSelector clear",DT_CONTROLS);
 disconnect(descrSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::descrSelectorChanged);
 disconnect(groupSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::groupSelectorChanged);
 disconnect(varSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::varSelectorChanged);
-varSelector->init();
-groupSelector->init();
-descrSelector->init();
+
+if (namedescr_query!=nullptr)
+    delete namedescr_query;
+if (group_query!=nullptr)
+    delete group_query;
+
+varSelector->clear();
+groupSelector->clear();
+descrSelector->clear();
 current_set = {};
 buttons->setAddButtonText(UI_GLOBALS::PLACEHOLDER);
 buttons->setSoloButtonText(UI_GLOBALS::PLACEHOLDER);
@@ -82,6 +92,7 @@ groupSelector->reset();
 descrSelector->reset();
 }
 
+//вызывается при изменении селектора переменной
 void ItemSelector::varSelectorChanged()
 {
 QString g,v;
@@ -108,6 +119,7 @@ else
 emit changed();
 }
 
+//вызывается при изменении селектора описания переменной
 void ItemSelector::descrSelectorChanged()
 {
 mapper->setCurrentIndex(descrSelector->currentIndex());
@@ -116,22 +128,24 @@ if (descrSelector->currentIndex()<0)
 emit changed();
 }
 
+//вызывается при изменении селектора группы
 void ItemSelector::groupSelectorChanged()
 {
 using namespace SQL_GLOBALS;
 if (groupSelector->currentIndex()<0)
-  init_query->exec(SqlSelectQuery::buildSelectQuery({NAME_COLUMN,GROUPID_COLUMN,DESCRIPTION_COLUMN},DESCRIPTIONS_TABLE,{},
+  namedescr_query->prepare(SqlSelectQuery::buildSelectQuery({NAME_COLUMN,GROUPID_COLUMN,DESCRIPTION_COLUMN},DESCRIPTIONS_TABLE,{},
                                                     {},
                                                     false,NAME_COLUMN));
 else
-  init_query->exec(SqlSelectQuery::buildSelectQuery({NAME_COLUMN,GROUPID_COLUMN,DESCRIPTION_COLUMN},DESCRIPTIONS_TABLE,{},
+  namedescr_query->prepare(SqlSelectQuery::buildSelectQuery({NAME_COLUMN,GROUPID_COLUMN,DESCRIPTION_COLUMN},DESCRIPTIONS_TABLE,{},
                                                     {SqlFilter(GROUPID,QStringList(QString::number(groupSelector->currentIndex())))},
                                                     false,NAME_COLUMN));
-model->setQuery(*init_query);
+
 descrSelector->reset();
 varSelector->reset();
 }
 
+//вызывается при инажатии на кнопку "Добавить"
 void ItemSelector::addValue()
 {
 if (!varSelector->currentText().isEmpty())
@@ -160,6 +174,8 @@ else
 emit changed();
 }
 
+
+//вызывается при инажатии на кнопку "Добавить соло"
 void ItemSelector::soloValue()
 {
 if (!varSelector->currentText().isEmpty())
@@ -174,8 +190,24 @@ else
     current_set.insert(model->data(model->index(i,0)).toString());
   buttons->setAddButtonText(UI_GLOBALS::ALIAS_FOR_REMOVE_ALL);
   }
-
 emit changed();
-
 }
 
+void ItemSelector::update()
+{
+disconnect(descrSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::descrSelectorChanged);
+disconnect(groupSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::groupSelectorChanged);
+disconnect(varSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::varSelectorChanged);
+namedescr_query->exec();
+group_query->exec();
+model->setQuery(*namedescr_query);
+group_model->setQuery(*group_query);
+mapper->setModel(model); //маппер связывает имена и описания переменных
+varSelector->init(model,0,mapper,0);
+groupSelector->init(group_model,0);
+descrSelector->init(model,2,mapper,2);
+connect(descrSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::descrSelectorChanged);
+connect(groupSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::groupSelectorChanged);
+connect(varSelector,&ComboBoxSelector::indexChanged,this,&ItemSelector::varSelectorChanged);
+
+}

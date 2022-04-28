@@ -1,22 +1,28 @@
 #include "intervalselector.h"
+#include "sql_query.h"
 
+//класс содержит в себе два TimeSelector-а (начало и конец) и IntervalSlider, обеспечивает их взаимодействие
 IntervalSelector::IntervalSelector(QWidget *parent)
 {
 startSelector = new TimeSelector(parent, "Начало");
-connect(startSelector,&TimeSelector::changed,this,&IntervalSelector::startSelectorChanged);
 endSelector = new TimeSelector(parent, "Конец");
-connect(endSelector,&TimeSelector::changed,this,&IntervalSelector::endSelectorChanged);
 slider = new IntervalSlider(parent,"");
-connect(slider,&IntervalSlider::changed,this,&IntervalSelector::sliderChanged);
+
+minmax_query = nullptr;
+stages_query = nullptr;
 }
 
 IntervalSelector::~IntervalSelector()
 {
 delete startSelector;
 delete endSelector;
-delete init_query;
+if (minmax_query!=nullptr)
+    delete minmax_query;
+if (stages_query!=nullptr)
+    delete stages_query;
 }
 
+//возвращает текущий выбранный интервал
 QPair<QString,QString> IntervalSelector::getInterval()
 {
 if (startSelector->getTime()>endSelector->getTime())
@@ -27,54 +33,49 @@ if (startSelector->getTime()>endSelector->getTime())
 return QPair<QString,QString>(startSelector->getTimeStr(),endSelector->getTimeStr());
 }
 
-void IntervalSelector::init()
+//пустой инит
+void IntervalSelector::clear()
 {
-startSelector->init();
-endSelector->init();
-slider->init();
+disconnect(startSelector,&TimeSelector::changed,this,&IntervalSelector::startSelectorChanged);
+disconnect(slider,&IntervalSlider::changed,this,&IntervalSelector::sliderChanged);
+disconnect(endSelector,&TimeSelector::changed,this,&IntervalSelector::endSelectorChanged);
+startSelector->clear();
+endSelector->clear();
+slider->clear();
+if (minmax_query!=nullptr)
+    delete minmax_query;
+if (stages_query!=nullptr)
+    delete stages_query;
 }
 
-bool IntervalSelector::init(QSqlQuery* query,QSqlQuery* stages)
+//инит через два sql запроса, один возвращает минимальное и максимальное значения времени в БД
+//Второй возвращает временные точки для определения этапов
+bool IntervalSelector::init(QSqlDatabase *db)
 {
-if (query==nullptr)
-  {
-  toDebug("intervalSelector init failed with query = NULL",DT_ERROR);
-  return false;
-  }
-init_query = query;
-stages_query = stages;
-if (startSelector->init(init_query)&&endSelector->init(init_query)&&slider->init(init_query,stages_query))
-  {
-  toDebug("intervalSelector init with "+init_query->lastQuery()+init_query->value(0).toString()+init_query->value(1).toString()+stages->lastQuery(),DT_CONTROLS);
-  reset();
-  return true;
-  }
-else
-  {
-  toDebug("intervalSelector init failed with query "+init_query->lastQuery(),DT_ERROR);
-  return false;
-  }
+minmax_query = new QSqlQuery(*db);
+stages_query = new QSqlQuery(*db);
+using namespace SQL_GLOBALS;
+minmax_query->prepare(SqlSelectQuery::buildSelectQuery(
+                          { QString( "MIN(%1)" ).arg( DATETIME_COLUMN ), QString( "MAX(%1)" ).arg( DATETIME_COLUMN ) },
+                           QString( "(%1) tmp" )
+                               .arg( SqlSelectQuery::buildUnion(
+                                   SqlSelectQuery::buildSelectQuery( { DATETIME_COLUMN }, VALUES_TABLE ),
+                                   SqlSelectQuery::buildSelectQuery( { DATETIME_COLUMN }, MESSAGES_TABLE ) ) ) ) );
+stages_query->prepare(SqlSelectQuery::buildSelectQuery( { MESSAGE_COLUMN, DATETIME_COLUMN }, MESSAGES_TABLE, {},
+                                                         { SqlFilter( MESSAGE_COLUMN, GLOBALS::STAGE_MSGS ) }));
+
+update();
+return 1;
 }
 
 void IntervalSelector::reset()
 {
-if (init_query==nullptr)
-  {
-  toDebug("intervalSelector reset failed with query = NULL",DT_ERROR);
-  return;
-  }
-if (init_query->first())
-  {
-  toDebug("intervalSelector reset with "+init_query->lastQuery()+init_query->value(0).toString()+init_query->value(1).toString(),DT_CONTROLS);
-  startSelector->setTime(init_query->value(0).toDateTime());
-  endSelector->setTime(init_query->value(1).toDateTime());
-  slider->setValues(init_query->value(0).toDateTime().toSecsSinceEpoch(),init_query->value(1).toDateTime().toSecsSinceEpoch());
-
-  }
-else
-  toDebug("intervalSelector reset failed with query "+init_query->lastQuery(),DT_ERROR);
+startSelector->setTime(minmax_query->value(0).toDateTime());
+endSelector->setTime(minmax_query->value(1).toDateTime());
+slider->setValues(minmax_query->value(0).toDateTime().toSecsSinceEpoch(),minmax_query->value(1).toDateTime().toSecsSinceEpoch());
 }
 
+//сигналы эмитятся каждый раз, когда меняется один из элементов
 void IntervalSelector::startSelectorChanged()
 {
 if (startSelector->getTime()>endSelector->getTime())
@@ -98,3 +99,19 @@ endSelector->setTime(QDateTime::fromSecsSinceEpoch(max));
 emit changed();
 }
 
+void IntervalSelector::update()
+{
+disconnect(startSelector,&TimeSelector::changed,this,&IntervalSelector::startSelectorChanged);
+disconnect(slider,&IntervalSlider::changed,this,&IntervalSelector::sliderChanged);
+disconnect(endSelector,&TimeSelector::changed,this,&IntervalSelector::endSelectorChanged);
+minmax_query->exec();
+stages_query->exec();
+startSelector->init(minmax_query);
+endSelector->init(minmax_query);
+slider->init(minmax_query,stages_query);
+startSelector->setTime(QDateTime::fromSecsSinceEpoch(slider->getMin()));
+endSelector->setTime(QDateTime::fromSecsSinceEpoch(slider->getMax()+1));
+connect(startSelector,&TimeSelector::changed,this,&IntervalSelector::startSelectorChanged);
+connect(slider,&IntervalSlider::changed,this,&IntervalSelector::sliderChanged);
+connect(endSelector,&TimeSelector::changed,this,&IntervalSelector::endSelectorChanged);
+}

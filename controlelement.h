@@ -20,9 +20,10 @@ class ControlElement: public QObject
 public:
     ControlElement(QWidget *parent, const QString& labeltext);
     ~ControlElement();
-    virtual void init()=0;
+    virtual bool init()=0;
+    virtual void clear()=0;
     virtual void reset()=0;
-    virtual void emitChanged()=0;
+    virtual void update()=0;
 
 signals:
     void changed();
@@ -31,7 +32,6 @@ protected:
     QLabel *label;
     QGroupBox *groupBox;
     QHBoxLayout *layout;
-    QSqlQuery *init_query;
 };
 
 #endif // CONTROLELEMENT_H

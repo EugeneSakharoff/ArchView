@@ -1,5 +1,5 @@
 #include "customdelegate.h"
-
+//Класс для отображения содержимого ячеек таблицы, нужен, чтобы отображать HTML
 CustomDelegate::CustomDelegate(QObject *parent) : QStyledItemDelegate(parent)
 {
 
